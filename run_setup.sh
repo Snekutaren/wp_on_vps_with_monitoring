@@ -111,11 +111,26 @@ setup_env() {
 # --- Password for backup key ---
 create_backup_key_password() {
     echo "Generating a random password for backup key..."
-    /dev/urandom tr -dc A-Za-z0-9_ | head -c 32 > /root/backup_passphrase.key
-	echo "" >> /root/backup_passphrase.key
-    chmod 600 /root/backup_passphrase.key
-    echo -e "\nRandom password generated and saved to /root/backup_passphrase.key with proper permissions."
-    echo "Please take notice of or change backup password in /root/backup_passphrase.key"
+
+    # Use the corrected command and check its exit status immediately
+    if tr -dc A-Za-z0-9_ < /dev/urandom | head -c 32 > /root/backup_passphrase.key; then
+        echo "Password generated successfully." # Indicate success of generation
+        
+        # Add the newline only if the key was written
+        echo "" >> /root/backup_passphrase.key
+
+        # Set permissions and check if chmod was successful
+        if chmod 600 /root/backup_passphrase.key; then
+            echo -e "\nRandom password generated and saved to /root/backup_passphrase.key with proper permissions."
+            echo "Please take notice of or change backup password in /root/backup_passphrase.key"
+        else
+            echo "Error: Failed to set permissions for /root/backup_passphrase.key. Exiting."
+            exit 1 # Exit if chmod fails
+        fi
+    else
+        echo "Error: Failed to generate or save backup password to /root/backup_passphrase.key. Exiting."
+        exit 1 # Exit if the password generation pipeline fails
+    fi
 }
 
 remove_download_dir() {
