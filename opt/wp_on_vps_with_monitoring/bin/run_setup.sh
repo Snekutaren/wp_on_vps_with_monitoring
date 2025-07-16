@@ -94,7 +94,7 @@ install_docker() {
 
 setup_env() {
     mv -v /opt/wp_on_vps_with_monitoring/traefik/example.env /opt/wp_on_vps_with_monitoring/traefik/.env
-    mv -v /opt/wp_on_vps_with_monitoring/webstack/example.env /opt/wp_on_vps_with_monitoring/webstack/example.env
+    mv -v /opt/wp_on_vps_with_monitoring/webstack/example.env /opt/wp_on_vps_with_monitoring/webstack/.env
     mv -v /opt/wp_on_vps_with_monitoring/monitoring/example.env /opt/wp_on_vps_with_monitoring/monitoring/.env
 }
 
