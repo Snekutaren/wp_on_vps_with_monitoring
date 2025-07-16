@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# --- Configuration ---
+4# --- Configuration ---
 # The directory where the project is extracted.
 # We determine this dynamically based on the script's location.
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
@@ -97,6 +97,7 @@ create_backup_key_password() {
         no|No|N|n )
             echo "Generating a random password for backup key..."
             < /dev/urandom tr -dc A-Za-z0-9_ | head -c 32 > /root/backup_passphrase.key
+	    echo "" | sudo tee -a /root/backup_passphrase.key > /dev/null
             chmod 600 /root/backup_passphrase.key
             echo -e "\nRandom password generated and saved to /root/backup_passphrase.key with proper permissions."
             ;;
@@ -113,7 +114,6 @@ main() {
         echo "Please run as root."
         exit 1
     fi
-
     install_prerequisites
     install_docker
     create_backup_key_password
