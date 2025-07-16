@@ -1,0 +1,79 @@
+services:
+  loki:
+    image: ${LOKI_IMAGE:-grafana/loki:3.2.0}
+    volumes:
+      - /etc/wp_on_vps_with_monitoring/monitoring/loki/loki-config.yaml:/config/config.yaml
+    env_file:
+      - /etc/wp_on_vps_with_monitoring/monitoring/.env
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3100/ready | grep ready"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+
+  promtail:
+    image: ${PROMTAIL_IMAGE:-grafana/promtail:3.2.0}
+    volumes:
+      - /etc/wp_on_vps_with_monitoring/monitoring/promtail/promtail-config.yaml:/etc/promtail/promtail.yaml
+      - /var/log/wp_on_vps_with_monitoring/traefik:/var/log/:ro
+    env_file:
+      - /etc/wp_on_vps_with_monitoring/monitoring/.env
+    command: -config.file=/etc/promtail/promtail.yaml
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pidof promtail || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+
+  grafana:
+    image: ${GRAFANA_IMAGE:-grafana/grafana:11.1.4}
+    env_file:
+      - /etc/wp_on_vps_with_monitoring/monitoring/.env
+    networks:
+      - app-network
+      - proxy-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000 | grep stylesheet"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana.rule=Host(`${GRAFANA_DOMAIN:-grafana.insolita.se}`)"
+      - "traefik.http.routers.grafana.entrypoints=websecure"
+      - "traefik.http.routers.grafana.tls=true"
+      - "traefik.http.routers.grafana.tls.certresolver=${CERT_RESOLVER}"
+      - "traefik.http.routers.grafana.tls.domains[0].main=${DOMAIN:-insolita.se}"
+      - "traefik.http.routers.grafana.tls.domains[0].sans=www.${DOMAIN:-insolita.se},traefik.${DOMAIN:-insolita.se},${GRAFANA_DOMAIN:-grafana.insolita.se}"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+
+volumes: {}
+
+networks:
+  app-network:
+    driver: bridge
+  proxy-net:
+    external: true
+    name: proxy-net

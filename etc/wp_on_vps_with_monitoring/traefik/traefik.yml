@@ -1,0 +1,44 @@
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false
+
+entrypoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+    http:
+      middlewares:
+        - rate-limit@file
+
+providers:
+  docker:
+    exposedByDefault: false
+    network: proxy-net
+  file:
+    filename: /etc/traefik/dynamic.yml
+    watch: true
+
+api:
+  dashboard: true
+  insecure: false
+
+certificatesResolvers:
+  myresolver:
+    acme:
+      email: "${EMAIL}"
+      storage: /letsencrypt/acme.json
+      caServer: "${LETSENCRYPT_CA_SERVER}"
+      tlsChallenge: true
+
+log:
+  level: DEBUG
+
+accessLog: {}
+
+http:
+  middlewares:
+    rate-limit:
+      rateLimit:
+        average: 100
+        burst: 50

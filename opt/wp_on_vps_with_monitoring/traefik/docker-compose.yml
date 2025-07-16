@@ -1,0 +1,49 @@
+services:
+  traefik:
+    image: ${TRAEFIK_IMAGE}
+    container_name: traefik
+    env_file:
+      - /etc/wp_on_vps_with_monitoring/traefik/.env
+    restart: unless-stopped
+    command:
+      - "--log.level=DEBUG"
+      - "--api=true"  # Enable API
+      - "--api.insecure=false"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=proxy-net"
+      - "--entrypoints.web.address=:${HTTP_PORT}"
+      - "--entrypoints.websecure.address=:${HTTPS_PORT}"
+      - "--certificatesresolvers.${CERT_RESOLVER}.acme.tlschallenge=true"
+      - "--certificatesresolvers.${CERT_RESOLVER}.acme.email=${EMAIL}"
+      - "--certificatesresolvers.${CERT_RESOLVER}.acme.storage=/letsencrypt/acme.json"
+      - "--certificatesresolvers.${CERT_RESOLVER}.acme.caServer=${LETSENCRYPT_CA_SERVER}"
+    ports:
+      - "${HTTP_PORT}:80"
+      - "${HTTPS_PORT}:443"
+    volumes:
+#     - ./traefik.yml:/etc/traefik/traefik.yml
+#     - ./dynamic.yml:/etc/traefik/dynamic.yml
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_letsencrypt:/letsencrypt
+    networks:
+      - proxy-net
+    labels:
+      - "traefik.enable=false"  # Dashbord status
+      - "traefik.http.routers.traefik-dashboard.rule=Host(`traefik.${DOMAIN}`)"
+      - "traefik.http.routers.traefik-dashboard.entrypoints=websecure"
+      - "traefik.http.routers.traefik-dashboard.tls=true"
+      - "traefik.http.routers.traefik-dashboard.tls.certresolver=${CERT_RESOLVER}"
+      - "traefik.http.routers.traefik-dashboard.service=api@internal"
+      - "traefik.http.routers.traefik-dashboard.tls.domains[0].main=${DOMAIN}"
+      - "traefik.http.routers.traefik-dashboard.tls.domains[0].sans=www.${DOMAIN},traefik.${DOMAIN},${GRAFANA_DOMAIN}"
+      - "traefik.http.routers.traefik-dashboard.middlewares=dashboard-auth"
+      - "traefik.http.middlewares.dashboard-auth.basicauth.users=${DASHBOARD_BASIC_AUTH}"
+
+volumes:
+  traefik_letsencrypt:
+
+networks:
+  proxy-net:
+    driver: bridge
+    name: proxy-net

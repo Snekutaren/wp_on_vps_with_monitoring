@@ -1,0 +1,15 @@
+  http:
+    routers:
+      catchall:
+        rule: "HostRegexp(`{host:.+}`)"
+        service: nop
+        entryPoints:
+          - websecure
+        middlewares:
+          - rate-limit@file
+        priority: 1
+    services:
+      nop:
+        loadBalancer:
+          servers:
+            - url: "http://127.0.0.1:9999"

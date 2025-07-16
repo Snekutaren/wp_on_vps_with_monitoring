@@ -1,0 +1,4 @@
+CREATE DATABASE IF NOT EXISTS matomo;
+CREATE USER IF NOT EXISTS 'matomo'@'%' IDENTIFIED BY 'matomo_password';
+GRANT ALL PRIVILEGES ON matomo.* TO 'matomo'@'%';
+FLUSH PRIVILEGES;
