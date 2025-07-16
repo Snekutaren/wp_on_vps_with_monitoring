@@ -1,12 +1,12 @@
 #!/bin/bash
 
-4# --- Configuration ---
+--- Configuration ---
 # The directory where the project is extracted.
 # We determine this dynamically based on the script's location.
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 PROJECT_ROOT_DIR=$(dirname "$SCRIPT_DIR")
 
-fetching_and_copy() {
+fetch_and_copy() {
     echo "Cloning git.."
     git clone https://github.com/snekutaren/wp_on_vps_with_monitoring.git
 
@@ -92,6 +92,12 @@ install_docker() {
     fi
 }
 
+setup_env() {
+    mv -v /etc/wp_on_vps_with_monitoring/traefik/example.env /etc/wp_on_vps_with_monitoring/traefik/.env
+    mv -v /etc/wp_on_vps_with_monitoring/webstack/example.env /etc/wp_on_vps_with_monitoring/webstack/example.env/.env
+    mv -v /etc/wp_on_vps_with_monitoring/monitoring/example.env /etc/wp_on_vps_with_monitoring/monitoring/.env
+}
+
 # --- Password for backup key ---
 create_backup_key_password() {
     echo ""
@@ -128,9 +134,10 @@ main() {
         echo "Please run as root."
         exit 1
     fi
-    fetching_and_copy
+    fetch_and_copy
     install_prerequisites
     install_docker
+    setup_env
     create_backup_key_password
     echo ""
     echo "Setup script finished."
