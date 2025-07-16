@@ -83,76 +83,6 @@ install_docker() {
     fi
 }
 
-# --- Function to move project files into place ---
-setup_files() {
-    echo "Starting file setup..."
-
-    # Check if we are running from a temporary or non-root location
-    if [[ "$PROJECT_ROOT_DIR" != "/" ]]; then
-        echo "Detected project extracted at: $PROJECT_ROOT_DIR"
-        echo "Moving files to their respective system locations."
-
-        # Move etc, opt, var directories
-        # We use 'rsync -av' for merging directories, handling existing files gracefully.
-        # Then, we remove the source directory to effectively "move" it.
-
-        if [ -d "$PROJECT_ROOT_DIR/etc" ]; then
-            echo "Moving 'etc' directory contents to /etc/..."
-            rsync -av "$PROJECT_ROOT_DIR/etc/" "/etc/"
-            rm -rf "$PROJECT_ROOT_DIR/etc" # Remove after successful rsync
-        fi
-
-        if [ -d "$PROJECT_ROOT_DIR/opt" ]; then
-            echo "Moving 'opt' directory contents to /opt/..."
-            rsync -av "$PROJECT_ROOT_DIR/opt/" "/opt/"
-            rm -rf "$PROJECT_ROOT_DIR/opt"
-        fi
-
-        if [ -d "$PROJECT_ROOT_DIR/var" ]; then
-            echo "Moving 'var' directory contents to /var/..."
-            rsync -av "$PROJECT_ROOT_DIR/var/" "/var/"
-            rm -rf "$PROJECT_ROOT_DIR/var"
-        fi
-
-        # Copy helper scripts to /usr/local/bin and make them executable
-        echo "Copying helper scripts to /usr/local/bin..."
-        mkdir -p /usr/local/bin
-
-        SCRIPTS=(
-            "firewall_add_domain.sh"
-            "firewall_add_ip.sh"
-            "flush_iptables.sh"
-            "flush_nft_docker.sh"
-        )
-
-        for script in "${SCRIPTS[@]}"; do
-            if [ -f "$PROJECT_ROOT_DIR/$script" ]; then
-                cp "$PROJECT_ROOT_DIR/$script" "/usr/local/bin/"
-                chmod +x "/usr/local/bin/$script"
-                echo "Copied and made executable: /usr/local/bin/$script"
-                rm "$PROJECT_ROOT_DIR/$script" # Remove after successful copy
-            fi
-        done
-
-        # After moving/copying, remove the project's root directory if it's empty
-        # or contains only .gitignore or similar meta files.
-        echo "Cleaning up temporary project directory: $PROJECT_ROOT_DIR"
-        find "$PROJECT_ROOT_DIR" -depth -empty -delete 2>/dev/null || true # Delete empty directories
-        if [ -d "$PROJECT_ROOT_DIR" ] && [ -z "$(ls -A "$PROJECT_ROOT_DIR")" ]; then
-            rmdir "$PROJECT_ROOT_DIR" 2>/dev/null || true
-        fi
-
-        echo "File setup complete."
-    else
-        echo "Script is running from the root directory. Assuming files are already in place."
-        echo "Ensuring helper scripts in /usr/local/bin are executable."
-        chmod +x /usr/local/bin/firewall_add_domain.sh 2>/dev/null || true
-        chmod +x /usr/local/bin/firewall_add_ip.sh 2>/dev/null || true
-        chmod +x /usr/local/bin/flush_iptables.sh 2>/dev/null || true
-        chmod +x /usr/local/bin/flush_nft_docker.sh 2>/dev/null || true
-    fi
-}
-
 # --- Password for backup key ---
 create_backup_key_password() {
     echo ""
@@ -186,7 +116,6 @@ main() {
 
     install_prerequisites
     install_docker
-    setup_files
     create_backup_key_password
     echo ""
     echo "Setup script finished."
