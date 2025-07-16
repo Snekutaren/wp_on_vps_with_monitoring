@@ -1,0 +1,8 @@
+/var/lib/docker/containers/*/*.log {
+    size 10M
+    rotate 5
+    compress
+    missingok
+    notifempty
+    copytruncate  # Copy and truncate to avoid restarting Docker
+}
