@@ -44,7 +44,8 @@ install_docker() {
     if [ ! -f /etc/apt/keyrings/docker.gpg ]; then
         echo "Adding Docker GPG key..."
         install -m 0755 -d /etc/apt/keyrings
-        curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+        # Corrected: Changed /linux/debian/gpg to /linux/ubuntu/gpg
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
         if [ $? -ne 0 ]; then
             echo "Error: Failed to add Docker GPG key. Exiting."
             exit 1
@@ -55,7 +56,7 @@ install_docker() {
     if [ ! -f /etc/apt/sources.list.d/docker.list ]; then
         echo "Setting up Docker repository..."
         echo \
-          "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
+          "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
           $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
         if [ $? -ne 0 ]; then
             echo "Error: Failed to set up Docker repository. Exiting."
@@ -65,10 +66,13 @@ install_docker() {
 
     # Update apt package index
     apt update -y
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to update apt package index. Exiting."
+        exit 1
+    fi
 
     # Install Docker Engine, containerd, and Docker Compose
     apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-
     if [ $? -eq 0 ]; then
         echo "Docker installed successfully."
         systemctl enable docker
@@ -78,7 +82,6 @@ install_docker() {
         exit 1
     fi
 }
-
 
 # --- Function to move project files into place ---
 setup_files() {
@@ -153,7 +156,7 @@ setup_files() {
 # --- Password for backup key ---
 create_backup_key_password() {
     echo ""
-    read -p "Do you want to supply a password for the backup key? (yes/no): " choice
+    read -p "Do you want to supply a password for the backup key? If no a random password will be generated (yes/no): " choice
     case "$choice" in
         yes|Yes|Y|y )
             read -sp "Enter password for backup key: " backup_pass
@@ -173,44 +176,6 @@ create_backup_key_password() {
     esac
 }
 
-# --- Firewall setup ---
-configure_firewall() {
-    echo ""
-    echo "WARNING: This script will manipulate your firewall rules."
-    echo "It is highly recommended to have console access or to double-check your SSH port in the firewall script."
-    read -p "Do you want to continue with firewall configuration? (yes/no): " fw_continue
-    case "$fw_continue" in
-        yes|Yes|Y|y )
-            echo ""
-            read -p "Do you want to add an IP address or a domain for firewall access? (ip/domain): " fw_type
-            case "$fw_type" in
-                ip|IP )
-                    # Call the firewall_add_ip.sh script
-                    if [ -f "/usr/local/bin/firewall_add_ip.sh" ]; then
-                        /usr/local/bin/firewall_add_ip.sh
-                    else
-                        echo "Error: firewall_add_ip.sh not found in /usr/local/bin. Skipping."
-                    fi
-                    ;;
-                domain|DOMAIN )
-                    # Call the firewall_add_domain.sh script
-                    if [ -f "/usr/local/bin/firewall_add_domain.sh" ]; then
-                        /usr/local/bin/firewall_add_domain.sh
-                    else
-                        echo "Error: firewall_add_domain.sh not found in /usr/local/bin. Skipping."
-                    fi
-                    ;;
-                * )
-                    echo "Invalid choice. Skipping firewall configuration."
-                    ;;
-            esac
-            ;;
-        * )
-            echo "Firewall configuration skipped."
-            ;;
-    esac
-}
-
 # --- Main script execution ---
 main() {
     # Ensure the script is run as root
@@ -223,8 +188,6 @@ main() {
     install_docker
     setup_files
     create_backup_key_password
-    configure_firewall
-
     echo ""
     echo "Setup script finished."
     echo "Please review the configurations and restart necessary services if required (e.g., Docker, nftables service)."
