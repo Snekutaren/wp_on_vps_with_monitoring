@@ -93,9 +93,9 @@ install_docker() {
 }
 
 setup_env() {
-    mv -v /etc/wp_on_vps_with_monitoring/traefik/example.env /etc/wp_on_vps_with_monitoring/traefik/.env
-    mv -v /etc/wp_on_vps_with_monitoring/webstack/example.env /etc/wp_on_vps_with_monitoring/webstack/example.env/.env
-    mv -v /etc/wp_on_vps_with_monitoring/monitoring/example.env /etc/wp_on_vps_with_monitoring/monitoring/.env
+    mv -v /opt/wp_on_vps_with_monitoring/traefik/example.env /opt/wp_on_vps_with_monitoring/traefik/.env
+    mv -v /opt/wp_on_vps_with_monitoring/webstack/example.env /opt/wp_on_vps_with_monitoring/webstack/example.env/.env
+    mv -v /opt/wp_on_vps_with_monitoring/monitoring/example.env /opt/wp_on_vps_with_monitoring/monitoring/.env
 }
 
 # --- Password for backup key ---
