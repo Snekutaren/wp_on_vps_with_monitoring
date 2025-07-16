@@ -6,6 +6,15 @@
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 PROJECT_ROOT_DIR=$(dirname "$SCRIPT_DIR")
 
+fetching_and_copy() {
+    echo "Cloning git.."
+    git clone https://github.com/snekutaren/wp_on_vps_with_monitoring.git
+
+    echo "Copying files.."
+    sudo rsync -av ./wp_on_vps_with_monitoring/etc/ /etc/
+    sudo rsync -av ./wp_on_vps_with_monitoring/opt/ /opt/
+}
+
 # --- Function to install common prerequisites ---
 install_prerequisites() {
     echo "Installing common prerequisites..."
@@ -107,6 +116,11 @@ create_backup_key_password() {
     esac
 }
 
+remove_download_dir() {
+    echo "Removing git clone download directory.."
+    rm -rf ./wp_on_vps_with_monitoring/
+}
+
 # --- Main script execution ---
 main() {
     # Ensure the script is run as root
@@ -114,12 +128,14 @@ main() {
         echo "Please run as root."
         exit 1
     fi
+    fetching_and_copy
     install_prerequisites
     install_docker
     create_backup_key_password
     echo ""
     echo "Setup script finished."
-    echo "Please review the configurations and restart necessary services if required (e.g., Docker, nftables service)."
+    echo "Please take notice of backup password in /root/backup_passphrase.key"
+    remove_download_dir
 }
 
 # Call the main function
