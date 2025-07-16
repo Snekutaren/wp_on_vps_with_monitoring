@@ -2,15 +2,15 @@
 set -euo pipefail
 
 echo "=== Deploying traefik ==="
-cd /opt/wp_on_vps_with_monitoring/traefik
+cd /opt/wpmon/traefik
 docker compose up -d
 
 echo "=== Deploying webstack ==="
-cd /opt/wp_on_vps_with_monitoring/webstack
+cd /opt/wpmon/webstack
 docker compose up -d
 
 echo "=== Deploying monitoring ==="
-cd /opt/wp_on_vps_with_monitoring/monitoring
+cd /opt/wpmon/monitoring
 docker compose up -d
 
 echo "=== Deployment complete ==="

@@ -10,15 +10,15 @@ if [[ "$confirm" != "yes" ]]; then
 fi
 
 echo "=== Resetting monitoring (including volumes) ==="
-cd /opt/wp_on_vps_with_monitoring/monitoring
+cd /opt/wpmon/monitoring
 docker compose down -v
 
 echo "=== Resetting webstack (including volumes) ==="
-cd /opt/wp_on_vps_with_monitoring/webstack
+cd /opt/wp_on_vps_wwpmonith_monitoring/webstack
 docker compose down -v
 
 echo "=== Resetting traefik (including volumes) ==="
-cd /opt/wp_on_vps_with_monitoring/traefik
+cd /opt/wpmon/traefik
 docker compose down -v
 
 echo "=== Pruning unused networks ==="

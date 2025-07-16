@@ -2,15 +2,15 @@
 set -euo pipefail
 
 echo "=== Shutting down monitoring ==="
-cd /opt/wp_on_vps_with_monitoring/monitoring
+cd /opt/wpmon/monitoring
 docker compose down
 
 echo "=== Shutting down webstack ==="
-cd /opt/wp_on_vps_with_monitoring/webstack
+cd /opt/wpmon/webstack
 docker compose down
 
 echo "=== Shutting down reverse-proxy ==="
-cd /opt/wp_on_vps_with_monitoring/traefik
+cd /opt/wpmon/traefik
 docker compose down
 
 echo "=== Shutdown complete ==="

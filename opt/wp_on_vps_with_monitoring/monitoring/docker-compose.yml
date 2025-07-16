@@ -23,7 +23,7 @@ services:
     image: ${PROMTAIL_IMAGE:-grafana/promtail:3.2.0}
     volumes:
       - ./promtail/promtail-config.yaml:/etc/promtail/promtail.yaml
-      - /var/log/wp_on_vps_with_monitoring/traefik:/var/log/:ro
+      - /var/log/wpmon/traefik:/var/log/:ro
     env_file:
       - ./.env
     command: -config.file=/etc/promtail/promtail.yaml
