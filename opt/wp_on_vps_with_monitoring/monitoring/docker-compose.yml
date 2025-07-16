@@ -2,9 +2,9 @@ services:
   loki:
     image: ${LOKI_IMAGE:-grafana/loki:3.2.0}
     volumes:
-      - /etc/wp_on_vps_with_monitoring/monitoring/loki/loki-config.yaml:/config/config.yaml
+      - ./loki/loki-config.yaml:/config/config.yaml
     env_file:
-      - /etc/wp_on_vps_with_monitoring/monitoring/.env
+      - ./.env
     networks:
       - app-network
     healthcheck:
@@ -22,10 +22,10 @@ services:
   promtail:
     image: ${PROMTAIL_IMAGE:-grafana/promtail:3.2.0}
     volumes:
-      - /etc/wp_on_vps_with_monitoring/monitoring/promtail/promtail-config.yaml:/etc/promtail/promtail.yaml
+      - ./promtail/promtail-config.yaml:/etc/promtail/promtail.yaml
       - /var/log/wp_on_vps_with_monitoring/traefik:/var/log/:ro
     env_file:
-      - /etc/wp_on_vps_with_monitoring/monitoring/.env
+      - ./.env
     command: -config.file=/etc/promtail/promtail.yaml
     networks:
       - app-network
@@ -44,7 +44,7 @@ services:
   grafana:
     image: ${GRAFANA_IMAGE:-grafana/grafana:11.1.4}
     env_file:
-      - /etc/wp_on_vps_with_monitoring/monitoring/.env
+      - ./.env
     networks:
       - app-network
       - proxy-net
