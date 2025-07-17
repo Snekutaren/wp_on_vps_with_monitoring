@@ -8,7 +8,7 @@ set -euo pipefail # Exit on error, unset variables, pipefail
 #
 # If this script is run multiple times, it will overwrite any previous
 # manual modifications or custom configurations within the application's
-# directories (e.g., .env files).
+# directories (e.env files).
 #
 # If you have custom configurations you wish to preserve, please back them
 # up manually BEFORE running this script again.
@@ -40,7 +40,8 @@ fetch_and_copy() {
     fi
     
     echo "  Cloning git repository branch '${TARGET_BRANCH}' to temporary location: ${CLONE_DIR}..."
-    git clone -b "$TARGET_BRANCH" "$REPO_DIR" "$CLONE_DIR" || { echo "Error: Git clone of branch '${TARGET_BRANCH}' failed. Exiting." >&2; exit 1; }
+    # FIX: Changed "$REPO_DIR" to "$REPO_URL" to correctly clone the repository.
+    git clone -b "$TARGET_BRANCH" "$REPO_URL" "$CLONE_DIR" || { echo "Error: Git clone of branch '${TARGET_BRANCH}' failed. Exiting." >&2; exit 1; }
     
     # Removed: All code related to '/etc' synchronization, as per your instruction.
 
@@ -55,7 +56,7 @@ fetch_and_copy() {
     # - Update existing files if they are newer in the source.
     # - Delete files in the destination that are no longer in the source (--delete).
     # This effectively makes the destination mirror the source's content without deleting the top-level folder itself.
-    # REVERTED: The rsync source path is now back to "${CLONE_DIR}/opt/wp_on_vps_with_monitoring/"
+    # This path is correct for copying the *contents* of wp_on_vps_with_monitoring into the target.
     rsync -av --delete "${CLONE_DIR}/opt/wp_on_vps_with_monitoring/" "${INSTALL_BASE_DIR}/$APP_NAME/" || { echo "Error: Failed to synchronize application stack. Exiting." >&2; exit 1; }
     echo "Application files synchronization complete."
     echo ""
