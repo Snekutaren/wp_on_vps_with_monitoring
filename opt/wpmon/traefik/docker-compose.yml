@@ -1,7 +1,7 @@
 services:
   traefik:
     image: ${TRAEFIK_IMAGE}
-    #container_name: traefik # has to be removed for multiple stacks
+    container_name: traefik # has to be removed for multiple stacks
     env_file:
       - ./.env
     restart: unless-stopped
