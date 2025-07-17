@@ -40,7 +40,7 @@ fetch_and_copy() {
     fi
     
     echo "  Cloning git repository branch '${TARGET_BRANCH}' to temporary location: ${CLONE_DIR}..."
-    git clone -b "$TARGET_BRANCH" "$REPO_URL" "$CLONE_DIR" || { echo "Error: Git clone of branch '${TARGET_BRANCH}' failed. Exiting." >&2; exit 1; }
+    git clone -b "$TARGET_BRANCH" "$REPO_DIR" "$CLONE_DIR" || { echo "Error: Git clone of branch '${TARGET_BRANCH}' failed. Exiting." >&2; exit 1; }
     
     # Removed: All code related to '/etc' synchronization, as per your instruction.
 
@@ -55,8 +55,8 @@ fetch_and_copy() {
     # - Update existing files if they are newer in the source.
     # - Delete files in the destination that are no longer in the source (--delete).
     # This effectively makes the destination mirror the source's content without deleting the top-level folder itself.
-    # CHANGED: The rsync source path is now "${CLONE_DIR}/opt/" to correctly match the repository's structure.
-    rsync -av --delete "${CLONE_DIR}/opt/" "${INSTALL_BASE_DIR}/$APP_NAME/" || { echo "Error: Failed to synchronize application stack. Exiting." >&2; exit 1; }
+    # REVERTED: The rsync source path is now back to "${CLONE_DIR}/opt/wp_on_vps_with_monitoring/"
+    rsync -av --delete "${CLONE_DIR}/opt/wp_on_vps_with_monitoring/" "${INSTALL_BASE_DIR}/$APP_NAME/" || { echo "Error: Failed to synchronize application stack. Exiting." >&2; exit 1; }
     echo "Application files synchronization complete."
     echo ""
 }
@@ -132,132 +132,4 @@ setup_env() {
             sed -i "s|^APP_NAME=.*|APP_NAME=$APP_NAME|" "$stack_env_file" || { echo "Error: Failed to update APP_NAME in ${stack} .env file. Exiting." >&2; exit 1; }
         else
             echo "  Appending APP_NAME=$APP_NAME to $stack_env_file."
-            echo "APP_NAME=$APP_NAME" >> "$stack_env_file" || { echo "Error: Failed to append APP_NAME to ${stack} .env file. Exiting." >&2; exit 1; }
-        fi
-        
-        # Step 3: Ensure the file ends with a newline character for best practice
-        # This check prevents adding multiple blank lines if one already exists
-        [ "$(tail -c 1 "$stack_env_file" | wc -l)" -eq 0 ] && echo "" >> "$stack_env_file"
-
-    done
-    echo "Environment files setup complete."
-    echo ""
-}
-
-# --- Password for backup key ---
-create_backup_key_password() {
-    echo "=== Creating Backup Key Password ==="
-    local BACKUP_KEY_PATH="/root/backup_passphrase.key"
-
-    if [ -f "$BACKUP_KEY_PATH" ]; then
-        echo "  Backup key password file already exists at ${BACKUP_KEY_PATH}. Preserving existing key."
-        echo "  Please take notice of or change backup password in ${BACKUP_KEY_PATH} if needed."
-    else
-        echo "  Generating a random password for backup key..."
-        if tr -dc 'A-Za-z0-9_' < /dev/urandom | head -c 32 | tee "$BACKUP_KEY_PATH" > /dev/null; then
-            echo "" | tee -a "$BACKUP_KEY_PATH" > /dev/null # Ensure a newline
-            if chmod 600 "$BACKUP_KEY_PATH"; then
-                echo -e "  Random password generated and saved to ${BACKUP_KEY_PATH} with proper permissions."
-                echo "  Please take notice of or change backup password in ${BACKUP_KEY_PATH}"
-            else
-                echo "Error: Failed to set permissions for ${BACKUP_KEY_PATH}. Exiting." >&2; exit 1;
-            fi
-        else
-            echo "Error: Failed to generate or save backup password to ${BACKUP_KEY_PATH}. Exiting." >&2; exit 1;
-        fi
-    fi
-    echo "Backup key password setup complete."
-    echo ""
-}
-
-set_management_script_permissions() {
-    echo "=== Setting Management Script Permissions ==="
-    local SCRIPT_DIR="${INSTALL_BASE_DIR}/${APP_NAME}"
-    echo "Setting execute permissions for management scripts in ${SCRIPT_DIR}..."
-    chmod +x "${SCRIPT_DIR}/deploy.sh" \
-             "${SCRIPT_DIR}/reset.sh" \
-             "${SCRIPT_DIR}/restart.sh" \
-             "${SCRIPT_DIR}/shutdown.sh" || { echo "Error: Failed to set execute permissions on management scripts. Exiting." >&2; exit 1; }
-    echo "Management script permissions set successfully."
-    echo ""
-}
-
-# Renamed from 'remove_download_dir' to 'cleanup' and updated to use TEMP_DIR
-cleanup() {
-    echo "=== Cleaning Up Temporary Files ==="
-    if [ -d "$TEMP_DIR" ]; then
-        echo "Removing temporary directory: $TEMP_DIR"
-        rm -rf "$TEMP_DIR" || echo "Warning: Failed to remove temporary directory." >&2
-    fi
-    echo "Cleanup complete."
-}
-
-deploy() {
-    echo "=== Initiating Application Deployment ==="
-
-    # Check for active Docker containers before deployment, as per instruction.
-    if docker ps -q | grep -q .; then
-        echo "Error: Docker containers are already running on this host." >&2
-        echo "This deployment will likely result in port conflicts (e.g., ports 80, 443)." >&2
-        echo "If you intend to run multiple application stacks, you must manually adjust the" >&2
-        echo "exposed ports in their respective 'docker-compose.yml' files or stop existing" >&2
-        echo "Docker services before running this setup script." >&2
-        exit 1 # Exit immediately as per instruction
-    fi
-
-    cd "${INSTALL_BASE_DIR}/$APP_NAME" || { echo "Error: Could not change to application root directory. Exiting." >&2; exit 1; }
-    "./deploy.sh" || { echo "Error: Deployment script (deploy.sh) failed. Exiting." >&2; exit 1; }
-    echo "Deployment initiated. Checking Docker processes..."
-    docker ps || { echo "Warning: Failed to list Docker processes after deployment. Check Docker status manually." >&2; }
-    echo ""
-}
-
-# --- Main script execution ---
-main() {
-    # CRUCIAL CHECK: Ensure the script is run as root (EUID 0 indicates root user)
-    if [ "$EUID" -ne 0 ]; then
-        echo "Error: This script must be run as root." >&2;
-        echo "Please execute it either as: 'sudo ./run_setup.sh' (if sudo is installed)" >&2;
-        echo "OR: switch to the root user first (e.g., 'sudo su -' or 'su -') and then run './run_setup.sh'." >&2;
-        exit 1;
-    fi
-
-    # Parse command-line options
-    while getopts "b:" opt; do
-      case $opt in
-        b)
-          TARGET_BRANCH="$OPTARG"
-          ;;
-        \?)
-          echo "Invalid option: -$OPTARG" >&2
-          exit 1
-          ;;
-      esac
-    done
-    shift $((OPTIND-1)) # Shift positional parameters, so remaining arguments are not processed as options
-    
-    # Create a temporary directory and set up cleanup trap, as requested
-    TEMP_DIR=$(mktemp -d) || { echo "Error: Failed to create temporary directory. Exiting." >&2; exit 1; }
-    trap cleanup EXIT # Ensures cleanup runs on script exit or error
-
-    fetch_and_copy
-    install_prerequisites
-    install_docker
-    setup_env
-    create_backup_key_password
-    set_management_script_permissions
-    deploy 
-
-    echo -e "\n--- Setup and Deployment Process Complete ---"
-    echo "Your application is installed at: ${INSTALL_BASE_DIR}/$APP_NAME"
-    echo "You can manage it using:"
-    echo "   ${INSTALL_BASE_DIR}/$APP_NAME/deploy.sh"
-    echo "   ${INSTALL_BASE_DIR}/$APP_NAME/reset.sh"
-    echo "   ${INSTALL_BASE_DIR}/$APP_NAME/restart.sh" # Included in final message as its permissions are now set
-    echo "   ${INSTALL_BASE_DIR}/$APP_NAME/shutdown.sh" # Included in final message as its permissions are now set
-    echo "Please ensure your .env files are correctly configured and DNS records are set up."
-    echo "Check the output above for any errors or warnings."
-}
-
-# Call the main function
-main "$@"
+            echo "APP_NAME=$APP_NAME" >> "$stack_env_file" || { echo "Error: Failed to append APP_NAME to ${stack} .env file. Exiting." >&2; exit 1;
