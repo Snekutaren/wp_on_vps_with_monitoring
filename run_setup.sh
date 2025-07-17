@@ -57,7 +57,7 @@ fetch_and_copy() {
     # - Delete files in the destination that are no longer in the source (--delete).
     # This effectively makes the destination mirror the source's content without deleting the top-level folder itself.
     # This path is correct for copying the *contents* of wp_on_vps_with_monitoring into the target.
-    rsync -av --delete "${CLONE_DIR}/opt/wp_on_vps_with_monitoring/" "${INSTALL_BASE_DIR}/$APP_NAME/" || { echo "Error: Failed to synchronize application stack. Exiting." >&2; exit 1; }
+    rsync -av --delete "${CLONE_DIR}/opt/wpmon/" "${INSTALL_BASE_DIR}/$APP_NAME/" || { echo "Error: Failed to synchronize application stack. Exiting." >&2; exit 1; }
     echo "Application files synchronization complete."
     echo ""
 }
