@@ -55,8 +55,8 @@ fetch_and_copy() {
     # - Update existing files if they are newer in the source.
     # - Delete files in the destination that are no longer in the source (--delete).
     # This effectively makes the destination mirror the source's content without deleting the top-level folder itself.
-    # It assumes the target content is within 'opt/wp_on_vps_with_monitoring' inside the cloned repo.
-    rsync -av --delete "${CLONE_DIR}/opt/wp_on_vps_with_monitoring/" "${INSTALL_BASE_DIR}/$APP_NAME/" || { echo "Error: Failed to synchronize application stack. Exiting." >&2; exit 1; }
+    # CHANGED: The rsync source path is now "${CLONE_DIR}/opt/" to correctly match the repository's structure.
+    rsync -av --delete "${CLONE_DIR}/opt/" "${INSTALL_BASE_DIR}/$APP_NAME/" || { echo "Error: Failed to synchronize application stack. Exiting." >&2; exit 1; }
     echo "Application files synchronization complete."
     echo ""
 }
