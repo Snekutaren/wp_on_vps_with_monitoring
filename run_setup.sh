@@ -5,32 +5,48 @@ set -euo pipefail # Exit on error, unset variables, pipefail
 # This setup script is designed to ensure the application stack at
 # ${INSTALL_BASE_DIR}/${APP_NAME} exactly mirrors the state defined in the
 # linked Git repository.
-#####################################################################################
+#
 # If this script is run multiple times, it will overwrite any previous
 # manual modifications or custom configurations within the application's
-# directories (e.env files).
+# directories (e.g., .env files).
 #
 # If you have custom configurations you wish to preserve, please back them
 # up manually BEFORE running this script again.
 #------------------------
 
-#--- Configuration ---
+#--- Configuration Defaults ---
 # The base directory where the application stack will be installed.
 # Standard Linux locations include /opt, /usr/local/opt, /srv.
-INSTALL_BASE_DIR="/opt" # You can change this default if needed
+INSTALL_BASE_DIR="/opt"
 
-# The name of the application directory within $INSTALL_BASE_DIR
-APP_NAME="wpmon"
+# Default base name for the application directory (e.g., 'wpmon')
+DEFAULT_APP_BASE_NAME="wpmon"
+
+# Default starting port numbers
+HTTP="80"
+HTTPS="443"
+WP_PORT="80" # Default internal port for WordPress, as confirmed by docker-compose.yml
+LOKI_PORT="3100"
+GRAFANA_PORT="3000"
+
+# The Git repository URL
+REPO_URL="https://github.com/snekutaren/wp_on_vps_with_monitoring.git"
 
 # The Git branch to clone. Can be overridden by the -b flag.
 TARGET_BRANCH="main"
 
-# Temporary directory for downloads, will be set during execution in main()
-TEMP_DIR=""
+#--- Variables (will be set by CLI options or retain defaults) ---
+# The final application directory name (e.g., 'wpmon', 'wpmon_2', 'my_app')
+APP_NAME="$DEFAULT_APP_BASE_NAME" # Initial default, subject to CLI override
+
+# Internal flags and values for option parsing
+APP_NAME_SUFFIX_VALUE=""
+CUSTOM_APP_NAME_PROVIDED=false
+PORT_OFFSET=0
+TEMP_DIR="" # Temporary directory for downloads, set during execution in main()
 
 fetch_and_copy() {
     echo "=== Fetching and Synchronizing Application Files ==="
-    local REPO_URL="https://github.com/snekutaren/wp_on_vps_with_monitoring.git"
     local CLONE_DIR="${TEMP_DIR}/wp_on_vps_with_monitoring_temp_clone" # Use the temporary dir for cloning
 
     # Ensure the temporary clone directory is clean before cloning
@@ -40,7 +56,6 @@ fetch_and_copy() {
     fi
     
     echo "  Cloning git repository branch '${TARGET_BRANCH}' to temporary location: ${CLONE_DIR}..."
-    # CRITICAL FIX: Changed "$REPO_DIR" to "$REPO_URL" to correctly clone the repository.
     git clone -b "$TARGET_BRANCH" "$REPO_URL" "$CLONE_DIR" || { echo "Error: Git clone of branch '${TARGET_BRANCH}' failed. Exiting." >&2; exit 1; }
     
     # Removed: All code related to '/etc' synchronization, as per your instruction.
@@ -56,7 +71,6 @@ fetch_and_copy() {
     # - Update existing files if they are newer in the source.
     # - Delete files in the destination that are no longer in the source (--delete).
     # This effectively makes the destination mirror the source's content without deleting the top-level folder itself.
-    # This path is correct for copying the *contents* of wp_on_vps_with_monitoring into the target.
     rsync -av --delete "${CLONE_DIR}/opt/wpmon/" "${INSTALL_BASE_DIR}/$APP_NAME/" || { echo "Error: Failed to synchronize application stack. Exiting." >&2; exit 1; }
     echo "Application files synchronization complete."
     echo ""
@@ -74,9 +88,6 @@ install_prerequisites() {
 # --- Function to install Docker from the official repository ---
 install_docker() {
     echo "=== Installing Docker from Official Repository ==="
-
-    # Removed: 'if command -v docker ... then return 0 fi' block, as per your preference.
-    # Relying on apt's internal idempotency for installation process.
 
     if [ ! -f /etc/apt/keyrings/docker.gpg ]; then
         echo "  Adding Docker GPG key..."
@@ -114,7 +125,6 @@ setup_env() {
 
         # Step 1: Ensure the .env file exists and has its base content
         if [ ! -f "$stack_env_file" ]; then
-            # If .env file does NOT exist, create it from example.env or as an empty file
             if [ -f "$example_env_path" ]; then
                 echo "  Copying $example_env_path to $stack_env_file (initial creation)."
                 cp -v "$example_env_path" "$stack_env_file" || { echo "Error: Failed to copy ${stack} example.env. Exiting." >&2; exit 1; }
@@ -127,7 +137,6 @@ setup_env() {
         fi
 
         # Step 2: Ensure APP_NAME is correctly set in the .env file (idempotent update)
-        # This uses the idempotent logic discussed for updating APP_NAME.
         if grep -q "^APP_NAME=" "$stack_env_file"; then
             echo "  Updating APP_NAME in $stack_env_file to '$APP_NAME'."
             sed -i "s|^APP_NAME=.*|APP_NAME=$APP_NAME|" "$stack_env_file" || { echo "Error: Failed to update APP_NAME in ${stack} .env file. Exiting." >&2; exit 1; }
@@ -136,8 +145,57 @@ setup_env() {
             echo "APP_NAME=$APP_NAME" >> "$stack_env_file" || { echo "Error: Failed to append APP_NAME to ${stack} .env file. Exiting." >&2; exit 1; }
         fi
         
-        # Step 3: Ensure the file ends with a newline character for best practice
-        # This check prevents adding multiple blank lines if one already exists
+        # Step 3: Set/Update Port Variables based on stack (idempotent update)
+        case "$stack" in
+            "traefik")
+                # Handle HTTP port
+                if grep -q "^HTTP=" "$stack_env_file"; then
+                    echo "  Updating HTTP in $stack_env_file to '$HTTP'."
+                    sed -i "s|^HTTP=.*|HTTP=$HTTP|" "$stack_env_file" || { echo "Error: Failed to update HTTP in traefik .env file. Exiting." >&2; exit 1; }
+                else
+                    echo "  Appending HTTP=$HTTP to $stack_env_file."
+                    echo "HTTP=$HTTP" >> "$stack_env_file" || { echo "Error: Failed to append HTTP to traefik .env file. Exiting." >&2; exit 1; }
+                fi
+                # Handle HTTPS port
+                if grep -q "^HTTPS=" "$stack_env_file"; then
+                    echo "  Updating HTTPS in $stack_env_file to '$HTTPS'."
+                    sed -i "s|^HTTPS=.*|HTTPS=$HTTPS|" "$stack_env_file" || { echo "Error: Failed to update HTTPS in traefik .env file. Exiting." >&2; exit 1; }
+                else
+                    echo "  Appending HTTPS=$HTTPS to $stack_env_file."
+                    echo "HTTPS=$HTTPS" >> "$stack_env_file" || { echo "Error: Failed to append HTTPS to traefik .env file. Exiting." >&2; exit 1; }
+                fi
+                ;;
+            "webstack")
+                # Handle WP_PORT
+                if grep -q "^WP_PORT=" "$stack_env_file"; then
+                    echo "  Updating WP_PORT in $stack_env_file to '$WP_PORT'."
+                    sed -i "s|^WP_PORT=.*|WP_PORT=$WP_PORT|" "$stack_env_file" || { echo "Error: Failed to update WP_PORT in webstack .env file. Exiting." >&2; exit 1; }
+                else
+                    echo "  Appending WP_PORT=$WP_PORT to $stack_env_file."
+                    echo "WP_PORT=$WP_PORT" >> "$stack_env_file" || { echo "Error: Failed to append WP_PORT to webstack .env file. Exiting." >&2; exit 1; }
+                fi
+                ;;
+            "monitoring")
+                # Handle LOKI_PORT
+                if grep -q "^LOKI_PORT=" "$stack_env_file"; then
+                    echo "  Updating LOKI_PORT in $stack_env_file to '$LOKI_PORT'."
+                    sed -i "s|^LOKI_PORT=.*|LOKI_PORT=$LOKI_PORT|" "$stack_env_file" || { echo "Error: Failed to update LOKI_PORT in monitoring .env file. Exiting." >&2; exit 1; }
+                else
+                    echo "  Appending LOKI_PORT=$LOKI_PORT to $stack_env_file."
+                    echo "LOKI_PORT=$LOKI_PORT" >> "$stack_env_file" || { echo "Error: Failed to append LOKI_PORT to monitoring .env file. Exiting." >&2; exit 1; }
+                fi
+                # Handle GRAFANA_PORT
+                if grep -q "^GRAFANA_PORT=" "$stack_env_file"; then
+                    echo "  Updating GRAFANA_PORT in $stack_env_file to '$GRAFANA_PORT'."
+                    sed -i "s|^GRAFANA_PORT=.*|GRAFANA_PORT=$GRAFANA_PORT|" "$stack_env_file" || { echo "Error: Failed to update GRAFANA_PORT in monitoring .env file. Exiting." >&2; exit 1; }
+                else
+                    echo "  Appending GRAFANA_PORT=$GRAFANA_PORT to $stack_env_file."
+                    echo "GRAFANA_PORT=$GRAFANA_PORT" >> "$stack_env_file" || { echo "Error: Failed to append GRAFANA_PORT to monitoring .env file. Exiting." >&2; exit 1; }
+                fi
+                ;;
+        esac
+        
+        # Step 4: Ensure the file ends with a newline character for best practice
         [ "$(tail -c 1 "$stack_env_file" | wc -l)" -eq 0 ] && echo "" >> "$stack_env_file"
 
     done
@@ -183,7 +241,6 @@ set_management_script_permissions() {
     echo ""
 }
 
-# Renamed from 'remove_download_dir' to 'cleanup' and updated to use TEMP_DIR
 cleanup() {
     echo "=== Cleaning Up Temporary Files ==="
     if [ -d "$TEMP_DIR" ]; then
@@ -223,11 +280,24 @@ main() {
         exit 1;
     fi
 
+    local CUSTOM_APP_BASE_NAME_ARG="" # Use a local variable for the argument passed to -a
+    local APP_NAME_SUFFIX_ARG=""     # Use a local variable for the argument passed to -n
+    local PORT_OFFSET_ARG=0          # Use a local variable for the argument passed to -o
+
     # Parse command-line options
-    while getopts "b:" opt; do
+    while getopts "b:a:n:o:" opt; do
       case $opt in
         b)
           TARGET_BRANCH="$OPTARG"
+          ;;
+        a) # Custom application base name
+          CUSTOM_APP_BASE_NAME_ARG="$OPTARG"
+          ;;
+        n) # Numeric suffix for application name (e.g., for wpmon_2)
+          APP_NAME_SUFFIX_ARG="_$OPTARG"
+          ;;
+        o) # Global port offset (added to all default ports)
+          PORT_OFFSET_ARG="$OPTARG"
           ;;
         \?)
           echo "Invalid option: -$OPTARG" >&2
@@ -235,9 +305,23 @@ main() {
           ;;
       esac
     done
-    shift $((OPTIND-1)) # Shift positional parameters, so remaining arguments are not processed as options
-    
-    # Create a temporary directory and set up cleanup trap, as requested
+    shift $((OPTIND-1)) # Shift positional parameters
+
+    # Determine final APP_NAME
+    if [ -n "$CUSTOM_APP_BASE_NAME_ARG" ]; then # If -a was provided
+        APP_NAME="${CUSTOM_APP_BASE_NAME_ARG}${APP_NAME_SUFFIX_ARG}"
+    else # If -a was not provided, use default base name
+        APP_NAME="${DEFAULT_APP_BASE_NAME}${APP_NAME_SUFFIX_ARG}"
+    fi
+
+    # Apply global port offset to all relevant ports
+    HTTP=$((HTTP + PORT_OFFSET_ARG))
+    HTTPS=$((HTTPS + PORT_OFFSET_ARG))
+    WP_PORT=$((WP_PORT + PORT_OFFSET_ARG))
+    LOKI_PORT=$((LOKI_PORT + PORT_OFFSET_ARG))
+    GRAFANA_PORT=$((GRAFANA_PORT + PORT_OFFSET_ARG))
+
+    # Create a temporary directory and set up cleanup trap
     TEMP_DIR=$(mktemp -d) || { echo "Error: Failed to create temporary directory. Exiting." >&2; exit 1; }
     trap cleanup EXIT # Ensures cleanup runs on script exit or error
 
@@ -254,8 +338,8 @@ main() {
     echo "You can manage it using:"
     echo "   ${INSTALL_BASE_DIR}/$APP_NAME/deploy.sh"
     echo "   ${INSTALL_BASE_DIR}/$APP_NAME/reset.sh"
-    echo "   ${INSTALL_BASE_DIR}/$APP_NAME/restart.sh" # Included in final message as its permissions are now set
-    echo "   ${INSTALL_BASE_DIR}/$APP_NAME/shutdown.sh" # Included in final message as its permissions are now set
+    echo "   ${INSTALL_BASE_DIR}/$APP_NAME/restart.sh"
+    echo "   ${INSTALL_BASE_DIR}/$APP_NAME/shutdown.sh"
     echo "Please ensure your .env files are correctly configured and DNS records are set up."
     echo "Check the output above for any errors or warnings."
 }
