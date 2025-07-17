@@ -2,7 +2,7 @@
 set -euo pipefail # Exit on error, unset variables, pipefail
 
 #--- IMPORTANT NOTICE ---
-# This setup script is designed to ensure the application stack at
+# This setup script ensures the application stack at
 # ${INSTALL_BASE_DIR}/${APP_NAME} exactly mirrors the state defined in the
 # linked Git repository.
 #####################################################################################
@@ -11,21 +11,21 @@ set -euo pipefail # Exit on error, unset variables, pipefail
 # This script detects if other Docker containers are already running on the host.
 #
 # If running containers are found, this script WILL NOT PROCEED WITH DEPLOYMENT
-# and will instead EXIT. This is to prevent accidental port conflicts and to
-# ensure you are aware of existing services.
+# and will instead EXIT. This prevents accidental port conflicts and ensures
+# you are aware of existing services.
 #
 # If you intend to deploy this application stack and require existing Docker
 # containers to be stopped, you must do so MANUALLY before re-running this script.
 #
 # A suggested command to stop ALL running Docker containers is provided in the
-# output if this situation occurs. Use it with caution, as it will affect all
+# output if this situation occurs. Use it with caution, as it affects all
 # Dockerized services on this host.
 #
 # If you have custom configurations you wish to preserve, please back them
 # up manually BEFORE running this script again.
-
-# You can stop all containers with the following command (use with caution!)
-#   sudo docker stop \$(docker ps -aq)"
+#
+# You can stop all containers with the following command (use with caution!):
+#   sudo docker stop $(docker ps -aq)
 #####################################################################################
 #------------------------
 
@@ -55,14 +55,28 @@ TARGET_BRANCH="main"
 APP_NAME="$DEFAULT_APP_BASE_NAME" # Initial default, subject to CLI override
 
 # Internal flags and values for option parsing
-APP_NAME_SUFFIX_VALUE=""
-CUSTOM_APP_NAME_PROVIDED=false
-PORT_OFFSET=0
+# APP_NAME_SUFFIX_VALUE will be set by -n and appended to APP_NAME
+# CUSTOM_APP_NAME_PROVIDED will track if -a was used
+# PORT_OFFSET will be set by -o
 TEMP_DIR="" # Temporary directory for downloads, set during execution in main()
 
+# --- Helper function to ensure a file ends with a newline ---
+# This prevents content concatenation when appending.
+ensure_newline_at_end() {
+    local file="$1"
+    if [ -f "$file" ]; then
+        # Check if the last character is NOT a newline. wc -l returns 0 if no newline at end.
+        if [ "$(tail -c 1 "$file" | wc -l)" -eq 0 ]; then
+            echo "" >> "$file" || { echo "Error: Failed to append newline to $file. Exiting." >&2; exit 1; }
+            echo "  Ensured '$file' ends with a newline."
+        fi
+    fi
+}
+
+# --- Function to fetch and synchronize application files ---
 fetch_and_copy() {
     echo "=== Fetching and Synchronizing Application Files ==="
-    local CLONE_DIR="${TEMP_DIR}/wp_on_vps_with_monitoring_temp_clone" # Use the temporary dir for cloning
+    local CLONE_DIR="${TEMP_DIR}/wp_on_vps_with_monitoring_temp_clone"
 
     # Ensure the temporary clone directory is clean before cloning
     if [ -d "$CLONE_DIR" ]; then
@@ -73,19 +87,11 @@ fetch_and_copy() {
     echo "  Cloning git repository branch '${TARGET_BRANCH}' to temporary location: ${CLONE_DIR}..."
     git clone -b "$TARGET_BRANCH" "$REPO_URL" "$CLONE_DIR" || { echo "Error: Git clone of branch '${TARGET_BRANCH}' failed. Exiting." >&2; exit 1; }
     
-    # Removed: All code related to '/etc' synchronization, as per your instruction.
-
     # Synchronize the main application stack directory
     echo "  Synchronizing application stack to ${INSTALL_BASE_DIR}/$APP_NAME..."
-    # Create the base directory if it doesn't exist
     mkdir -p "${INSTALL_BASE_DIR}/$APP_NAME" || { echo "Error: Failed to create application base directory. Exiting." >&2; exit 1; }
     
-    # rsync -av --delete will:
-    # - Synchronize files from source to destination.
-    # - Create destination directories if they don't exist.
-    # - Update existing files if they are newer in the source.
-    # - Delete files in the destination that are no longer in the source (--delete).
-    # This effectively makes the destination mirror the source's content without deleting the top-level folder itself.
+    # rsync -av --delete synchronizes files and deletes extra files in destination
     rsync -av --delete "${CLONE_DIR}/opt/wpmon/" "${INSTALL_BASE_DIR}/$APP_NAME/" || { echo "Error: Failed to synchronize application stack. Exiting." >&2; exit 1; }
     echo "Application files synchronization complete."
     echo ""
@@ -108,7 +114,7 @@ install_docker() {
         echo "  Adding Docker GPG key..."
         install -m 0755 -d /etc/apt/keyrings || { echo "Error: Failed to create /etc/apt/keyrings. Exiting." >&2; exit 1; }
         curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg || { echo "Error: Failed to add Docker GPG key. Exiting." >&2; exit 1; }
-        chmod 644 /etc/apt/keyrings/docker.gpg # Set permissions for the key file as requested
+        chmod 644 /etc/apt/keyrings/docker.gpg # Set permissions for the key file
         echo "  Docker GPG key added."
     fi
 
@@ -130,6 +136,7 @@ install_docker() {
     echo ""
 }
 
+# --- Function to setup environment files (.env) for each stack ---
 setup_env() {
     echo "=== Setting Up Environment Files ==="
     for stack in "traefik" "webstack" "monitoring"; do
@@ -147,8 +154,13 @@ setup_env() {
                 echo "  Creating empty .env file for ${stack} at $stack_env_file (no example.env found)."
                 touch "$stack_env_file" || { echo "Error: Failed to create empty .env for ${stack}. Exiting." >&2; exit 1; }
             fi
+            # IMPORTANT: Ensure the newly created/copied .env file ends with a newline.
+            # This prevents subsequent 'echo >>' from concatenating onto the last line.
+            ensure_newline_at_end "$stack_env_file"
         else
             echo "  .env file for ${stack} already exists. Preserving its content."
+            # Also ensure existing files end with a newline for robust updates
+            ensure_newline_at_end "$stack_env_file"
         fi
 
         # Step 2: Ensure APP_NAME is correctly set in the .env file (idempotent update)
@@ -210,8 +222,8 @@ setup_env() {
                 ;;
         esac
         
-        # Step 4: Ensure the file ends with a newline character for best practice
-        [ "$(tail -c 1 "$stack_env_file" | wc -l)" -eq 0 ] && echo "" >> "$stack_env_file"
+        # The final newline check for robustness
+        ensure_newline_at_end "$stack_env_file"
 
     done
     echo "Environment files setup complete."
@@ -244,6 +256,7 @@ create_backup_key_password() {
     echo ""
 }
 
+# --- Set execute permissions for management scripts ---
 set_management_script_permissions() {
     echo "=== Setting Management Script Permissions ==="
     local SCRIPT_DIR="${INSTALL_BASE_DIR}/${APP_NAME}"
@@ -256,6 +269,7 @@ set_management_script_permissions() {
     echo ""
 }
 
+# --- Cleanup temporary files ---
 cleanup() {
     echo "=== Cleaning Up Temporary Files ==="
     if [ -d "$TEMP_DIR" ]; then
@@ -265,11 +279,13 @@ cleanup() {
     echo "Cleanup complete."
 }
 
+# --- Deploy the Docker application stack ---
 deploy() {
     echo "=== Initiating Application Deployment ==="
 
-    # Set the Docker Compose project name to be unique for this stack
-    # This ensures containers are named like 'wpmon_1-traefik-1', 'wpmon_2-traefik-1' etc.
+    # Set the Docker Compose project name to be unique for this stack.
+    # This ensures containers are named like 'wpmon_1-traefik-1', 'wpmon_2-traefik-1', etc.,
+    # instead of just 'traefik-traefik-1' for multiple deployments.
     export COMPOSE_PROJECT_NAME="$APP_NAME"
     echo "  Setting Docker Compose project name to: $COMPOSE_PROJECT_NAME"
 
@@ -280,7 +296,7 @@ deploy() {
     echo ""
 }
 
-# --- Main script execution ---
+# --- Main Script Execution
 main() {
     # CRUCIAL CHECK: Ensure the script is run as root (EUID 0 indicates root user)
     if [ "$EUID" -ne 0 ]; then
@@ -290,9 +306,9 @@ main() {
         exit 1;
     fi
 
-    local CUSTOM_APP_BASE_NAME_ARG="" # Use a local variable for the argument passed to -a
-    local APP_NAME_SUFFIX_ARG=""      # Use a local variable for the argument passed to -n
-    local PORT_OFFSET_ARG=0           # Use a local variable for the argument passed to -o
+    local CUSTOM_APP_BASE_NAME_ARG=""
+    local APP_NAME_SUFFIX_ARG=""
+    local PORT_OFFSET_ARG=0
 
     # Parse command-line options
     while getopts "b:a:n:o:" opt; do
@@ -318,9 +334,9 @@ main() {
     shift $((OPTIND-1)) # Shift positional parameters
 
     # Determine final APP_NAME
-    if [ -n "$CUSTOM_APP_BASE_NAME_ARG" ]; then # If -a was provided
+    if [ -n "$CUSTOM_APP_BASE_NAME_ARG" ]; then
         APP_NAME="${CUSTOM_APP_BASE_NAME_ARG}${APP_NAME_SUFFIX_ARG}"
-    else # If -a was not provided, use default base name
+    else
         APP_NAME="${DEFAULT_APP_BASE_NAME}${APP_NAME_SUFFIX_ARG}"
     fi
 
@@ -335,6 +351,7 @@ main() {
     TEMP_DIR=$(mktemp -d) || { echo "Error: Failed to create temporary directory. Exiting." >&2; exit 1; }
     trap cleanup EXIT # Ensures cleanup runs on script exit or error
 
+    # Execute setup steps in order
     fetch_and_copy
     install_prerequisites
     install_docker
@@ -345,13 +362,13 @@ main() {
 
     echo -e "\n--- Setup and Deployment Process Complete ---"
     echo "Your application is installed at: ${INSTALL_BASE_DIR}/$APP_NAME"
-    echo "You can manage it using:"
+    echo "You can manage it using the scripts in that directory:"
     echo "   ${INSTALL_BASE_DIR}/$APP_NAME/deploy.sh"
     echo "   ${INSTALL_BASE_DIR}/$APP_NAME/reset.sh"
     echo "   ${INSTALL_BASE_DIR}/$APP_NAME/restart.sh"
     echo "   ${INSTALL_BASE_DIR}/$APP_NAME/shutdown.sh"
     echo "Please ensure your .env files are correctly configured and DNS records are set up."
-    echo "Check the output above for any errors or warnings."
+    echo "Review the output above for any errors or warnings."
 }
 
 # Call the main function
