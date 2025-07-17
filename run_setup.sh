@@ -40,7 +40,7 @@ fetch_and_copy() {
     fi
     
     echo "  Cloning git repository branch '${TARGET_BRANCH}' to temporary location: ${CLONE_DIR}..."
-    # FIX: Changed "$REPO_DIR" to "$REPO_URL" to correctly clone the repository.
+    # CRITICAL FIX: Changed "$REPO_DIR" to "$REPO_URL" to correctly clone the repository.
     git clone -b "$TARGET_BRANCH" "$REPO_URL" "$CLONE_DIR" || { echo "Error: Git clone of branch '${TARGET_BRANCH}' failed. Exiting." >&2; exit 1; }
     
     # Removed: All code related to '/etc' synchronization, as per your instruction.
