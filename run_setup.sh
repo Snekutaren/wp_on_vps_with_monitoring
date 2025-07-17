@@ -268,6 +268,11 @@ cleanup() {
 deploy() {
     echo "=== Initiating Application Deployment ==="
 
+    # Set the Docker Compose project name to be unique for this stack
+    # This ensures containers are named like 'wpmon_1-traefik-1', 'wpmon_2-traefik-1' etc.
+    export COMPOSE_PROJECT_NAME="$APP_NAME"
+    echo "  Setting Docker Compose project name to: $COMPOSE_PROJECT_NAME"
+
     cd "${INSTALL_BASE_DIR}/$APP_NAME" || { echo "Error: Could not change to application root directory. Exiting." >&2; exit 1; }
     "./deploy.sh" || { echo "Error: Deployment script (deploy.sh) failed. Exiting." >&2; exit 1; }
     echo "Deployment initiated. Checking Docker processes..."
