@@ -5,7 +5,7 @@ set -euo pipefail # Exit on error, unset variables, pipefail
 # This setup script is designed to ensure the application stack at
 # ${INSTALL_BASE_DIR}/${APP_NAME} exactly mirrors the state defined in the
 # linked Git repository.
-#
+#####################################################################################
 # If this script is run multiple times, it will overwrite any previous
 # manual modifications or custom configurations within the application's
 # directories (e.env files).
