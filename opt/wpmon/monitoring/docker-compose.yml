@@ -1,6 +1,6 @@
 services:
   loki:
-    image: ${LOKI_IMAGE:-grafana/loki:3.2.0}
+    image: ${LOKI_IMAGE}
     volumes:
       - ./loki/loki-config.yaml:/config/config.yaml
     env_file:
@@ -20,7 +20,7 @@ services:
           memory: 256m
 
   promtail:
-    image: ${PROMTAIL_IMAGE:-grafana/promtail:3.2.0}
+    image: ${PROMTAIL_IMAGE}
     volumes:
       - ./promtail/promtail-config.yaml:/etc/promtail/promtail.yaml
       - /var/log/wpmon/traefik:/var/log/:ro
@@ -42,7 +42,7 @@ services:
           memory: 256m
 
   grafana:
-    image: ${GRAFANA_IMAGE:-grafana/grafana:11.1.4}
+    image: ${GRAFANA_IMAGE}
     env_file:
       - ./.env
     networks:
@@ -61,7 +61,7 @@ services:
       - "traefik.http.routers.grafana.tls=true"
       - "traefik.http.routers.grafana.tls.certresolver=${CERT_RESOLVER}"
       - "traefik.http.routers.grafana.tls.domains[0].main=${DOMAIN}"
-      - "traefik.http.routers.grafana.tls.domains[0].sans=www.${DOMAIN},traefik.${DOMAIN},${GRAFANA_DOMAIN}"
+      - "traefik.http.routers.grafana.tls.domains[0].sans=www.${DOMAIN},${TRAEFIK_DOMAIN},${GRAFANA_DOMAIN}"
       - "traefik.http.services.grafana.loadbalancer.server.port=3000"
     restart: unless-stopped
     deploy:
