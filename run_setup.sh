@@ -23,6 +23,9 @@ set -euo pipefail # Exit on error, unset variables, pipefail
 #
 # If you have custom configurations you wish to preserve, please back them
 # up manually BEFORE running this script again.
+
+# You can stop all containers with the following command (use with caution!)
+#   sudo docker stop \$(docker ps -aq)"
 #####################################################################################
 #------------------------
 
@@ -264,17 +267,6 @@ cleanup() {
 
 deploy() {
     echo "=== Initiating Application Deployment ==="
-
-    # Check for active Docker containers. If any are running, inform the user and exit.
-    if docker ps -q | grep -q .; then
-        echo "ERROR: Docker containers are already running on this host." >&2
-        echo "This deployment will likely result in port conflicts (e.g., ports 80, 443)." >&2
-        echo "To proceed, you must manually stop all running Docker containers." >&2
-        echo "You can stop all containers with the following command (use with caution!):" >&2
-        echo "  sudo docker stop \$(docker ps -aq)" >&2
-        echo "After stopping them, please re-run this setup script." >&2
-        exit 1 # Exit immediately, requiring manual intervention
-    fi
 
     cd "${INSTALL_BASE_DIR}/$APP_NAME" || { echo "Error: Could not change to application root directory. Exiting." >&2; exit 1; }
     "./deploy.sh" || { echo "Error: Deployment script (deploy.sh) failed. Exiting." >&2; exit 1; }
