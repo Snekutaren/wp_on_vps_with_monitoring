@@ -14,7 +14,7 @@ cd /opt/wpmon/monitoring
 docker compose down -v
 
 echo "=== Resetting webstack (including volumes) ==="
-cd /opt/wp_on_vps_wwpmonith_monitoring/webstack
+cd /opt/wpmon/webstack
 docker compose down -v
 
 echo "=== Resetting traefik (including volumes) ==="
