@@ -3,9 +3,9 @@ services:
     image: ${MARIADB_IMAGE}
     volumes:
       - mariadb_data:/var/lib/mysql
-      - /etc/wp_on_vps_with_monitoring/webstack/mariadb/healthcheck.sh:/healthcheck.sh:ro
+      - ./mariadb/healthcheck.sh:/healthcheck.sh:ro
     env_file:
-      - /etc/wp_on_vps_with_monitoring/webstack/.env
+      - ./.env
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
@@ -30,7 +30,7 @@ services:
     volumes:
       - wordpress_data:/var/www/html
     env_file:
-      - /etc/wp_on_vps_with_monitoring/webstack/.env
+      - ./.env
     environment:
       - WORDPRESS_DB_HOST=mariadb:3306
       - WORDPRESS_DB_USER=${MYSQL_USER}

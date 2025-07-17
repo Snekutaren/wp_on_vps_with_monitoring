@@ -2,17 +2,17 @@
 set -euo pipefail
 
 echo "=== Restarting traefik ==="
-cd /opt/wp_on_vps_with_monitoring/traefik
+cd /opt/wpmon/traefik
 docker compose down
 docker compose up -d
 
 echo "=== Restarting webstack ==="
-cd /opt/wp_on_vps_with_monitoring/webstack
+cd /opt/wpmon/webstack
 docker compose down
 docker compose up -d
 
 echo "=== Restarting monitoring ==="
-cd /opt/wp_on_vps_with_monitoring/monitoring
+cd /opt/wpmon/monitoring
 docker compose down
 docker compose up -d
 

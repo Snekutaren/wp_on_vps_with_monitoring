@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # --- Configuration ---
-BACKUP_DIR="/var/backups/wp_on_vps_with monitoring"
+BACKUP_DIR="/var/backups/wpmon"
 PASSPHRASE_FILE="/root/backup_passphrase.key"
 RCLONE_REMOTE="gdrive:vps_backups" # Your rclone remote destination
 

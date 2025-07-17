@@ -3,7 +3,7 @@ services:
     image: ${TRAEFIK_IMAGE}
     container_name: traefik
     env_file:
-      - /etc/wp_on_vps_with_monitoring/traefik/.env
+      - ./.env
     restart: unless-stopped
     command:
       - "--log.level=DEBUG"
