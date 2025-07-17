@@ -5,13 +5,22 @@ set -euo pipefail # Exit on error, unset variables, pipefail
 # This setup script is designed to ensure the application stack at
 # ${INSTALL_BASE_DIR}/${APP_NAME} exactly mirrors the state defined in the
 # linked Git repository.
+#####################################################################################
+# *** CRITICAL WARNING FOR MULTI-STACK / RE-DEPLOYMENT SCENARIOS ***
 #
-# If this script is run multiple times, it will overwrite any previous
-# manual modifications or custom configurations within the application's
-# directories (e.g., .env files).
+# This script has been modified to STOP ALL RUNNING DOCKER CONTAINERS
+# on the host BEFORE initiating a new deployment.
+#
+# If you are running this script in a production environment, or if you have
+# other Docker containers on this host that you intend to keep running,
+# STOPPING THEM WILL CAUSE SERVICE INTERRUPTION.
+#
+# This behavior is implemented to facilitate testing multiple application
+# stacks on the same host and to prevent port conflicts during re-deployments.
 #
 # If you have custom configurations you wish to preserve, please back them
 # up manually BEFORE running this script again.
+#####################################################################################
 #------------------------
 
 #--- Configuration Defaults ---
@@ -253,14 +262,16 @@ cleanup() {
 deploy() {
     echo "=== Initiating Application Deployment ==="
 
-    # Check for active Docker containers before deployment, as per instruction.
+    # Check for active Docker containers. If any are running, stop them.
     if docker ps -q | grep -q .; then
-        echo "Error: Docker containers are already running on this host." >&2
-        echo "This deployment will likely result in port conflicts (e.g., ports 80, 443)." >&2
-        echo "If you intend to run multiple application stacks, you must manually adjust the" >&2
-        echo "exposed ports in their respective 'docker-compose.yml' files or stop existing" >&2
-        echo "Docker services before running this setup script." >&2
-        exit 1 # Exit immediately as per instruction
+        echo "WARNING: Docker containers are currently running on this host."
+        echo "         This script will now STOP ALL RUNNING CONTAINERS to prevent port conflicts."
+        echo "         This may cause service interruptions for other applications."
+        # Stop all running containers (this only stops, does not remove)
+        docker stop $(docker ps -aq) || { echo "Error: Failed to stop existing Docker containers. Exiting." >&2; exit 1; }
+        echo "         All previously running Docker containers have been stopped."
+    else
+        echo "No Docker containers were found running. Proceeding with deployment."
     fi
 
     cd "${INSTALL_BASE_DIR}/$APP_NAME" || { echo "Error: Could not change to application root directory. Exiting." >&2; exit 1; }
@@ -281,8 +292,8 @@ main() {
     fi
 
     local CUSTOM_APP_BASE_NAME_ARG="" # Use a local variable for the argument passed to -a
-    local APP_NAME_SUFFIX_ARG=""     # Use a local variable for the argument passed to -n
-    local PORT_OFFSET_ARG=0          # Use a local variable for the argument passed to -o
+    local APP_NAME_SUFFIX_ARG=""      # Use a local variable for the argument passed to -n
+    local PORT_OFFSET_ARG=0           # Use a local variable for the argument passed to -o
 
     # Parse command-line options
     while getopts "b:a:n:o:" opt; do
