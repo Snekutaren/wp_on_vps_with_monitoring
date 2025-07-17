@@ -6,17 +6,20 @@ set -euo pipefail # Exit on error, unset variables, pipefail
 # ${INSTALL_BASE_DIR}/${APP_NAME} exactly mirrors the state defined in the
 # linked Git repository.
 #####################################################################################
-# *** CRITICAL WARNING FOR MULTI-STACK / RE-DEPLOYMENT SCENARIOS ***
+# *** IMPORTANT WARNING REGARDING DOCKER CONTAINERS ***
 #
-# This script has been modified to STOP ALL RUNNING DOCKER CONTAINERS
-# on the host BEFORE initiating a new deployment.
+# This script detects if other Docker containers are already running on the host.
 #
-# If you are running this script in a production environment, or if you have
-# other Docker containers on this host that you intend to keep running,
-# STOPPING THEM WILL CAUSE SERVICE INTERRUPTION.
+# If running containers are found, this script WILL NOT PROCEED WITH DEPLOYMENT
+# and will instead EXIT. This is to prevent accidental port conflicts and to
+# ensure you are aware of existing services.
 #
-# This behavior is implemented to facilitate testing multiple application
-# stacks on the same host and to prevent port conflicts during re-deployments.
+# If you intend to deploy this application stack and require existing Docker
+# containers to be stopped, you must do so MANUALLY before re-running this script.
+#
+# A suggested command to stop ALL running Docker containers is provided in the
+# output if this situation occurs. Use it with caution, as it will affect all
+# Dockerized services on this host.
 #
 # If you have custom configurations you wish to preserve, please back them
 # up manually BEFORE running this script again.
@@ -196,7 +199,7 @@ setup_env() {
                 # Handle GRAFANA_PORT
                 if grep -q "^GRAFANA_PORT=" "$stack_env_file"; then
                     echo "  Updating GRAFANA_PORT in $stack_env_file to '$GRAFANA_PORT'."
-                    sed -i "s|^GRAFANA_PORT=.*|GRAFANA_PORT=$GRAFANA_PORT|" "$stack_env_file" || { echo "Error: Failed to update GRAFANA_PORT in monitoring .env file. Exiting." >&2; exit 1; }
+                    sed -i "s|^GRAFANA_PORT=.*|GRAFANA_PORT=$GRAFANA_file|" "$stack_env_file" || { echo "Error: Failed to update GRAFANA_PORT in monitoring .env file. Exiting." >&2; exit 1; }
                 else
                     echo "  Appending GRAFANA_PORT=$GRAFANA_PORT to $stack_env_file."
                     echo "GRAFANA_PORT=$GRAFANA_PORT" >> "$stack_env_file" || { echo "Error: Failed to append GRAFANA_PORT to monitoring .env file. Exiting." >&2; exit 1; }
@@ -262,16 +265,15 @@ cleanup() {
 deploy() {
     echo "=== Initiating Application Deployment ==="
 
-    # Check for active Docker containers. If any are running, stop them.
+    # Check for active Docker containers. If any are running, inform the user and exit.
     if docker ps -q | grep -q .; then
-        echo "WARNING: Docker containers are currently running on this host."
-        echo "         This script will now STOP ALL RUNNING CONTAINERS to prevent port conflicts."
-        echo "         This may cause service interruptions for other applications."
-        # Stop all running containers (this only stops, does not remove)
-        docker stop $(docker ps -aq) || { echo "Error: Failed to stop existing Docker containers. Exiting." >&2; exit 1; }
-        echo "         All previously running Docker containers have been stopped."
-    else
-        echo "No Docker containers were found running. Proceeding with deployment."
+        echo "ERROR: Docker containers are already running on this host." >&2
+        echo "This deployment will likely result in port conflicts (e.g., ports 80, 443)." >&2
+        echo "To proceed, you must manually stop all running Docker containers." >&2
+        echo "You can stop all containers with the following command (use with caution!):" >&2
+        echo "  sudo docker stop \$(docker ps -aq)" >&2
+        echo "After stopping them, please re-run this setup script." >&2
+        exit 1 # Exit immediately, requiring manual intervention
     fi
 
     cd "${INSTALL_BASE_DIR}/$APP_NAME" || { echo "Error: Could not change to application root directory. Exiting." >&2; exit 1; }
