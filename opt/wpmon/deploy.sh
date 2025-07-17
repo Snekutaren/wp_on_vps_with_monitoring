@@ -3,7 +3,9 @@
 set -euo pipefail
 
 # Dynamically determine the application's root directory based on this script's location.
-APP_ROOT_DIR=$(dirname "$(dirname "$(dirname "$0")")")
+# Since run_setup.sh ensures this script is executed from APP_ROOT_DIR,
+# $(dirname "$0") will resolve to the current directory ('.').
+APP_ROOT_DIR=$(dirname "$0")
 
 # Define the list of Docker Compose stack directories
 declare -a STACKS=("traefik" "webstack" "monitoring")
@@ -43,7 +45,7 @@ for stack_dir in "${STACKS[@]}"; do
         echo "--- $stack_dir stack deployed successfully ---"
     else
         echo "Error: Failed to deploy $stack_dir stack. Please review Docker Compose logs for details." >&2 # Output error to stderr
-        exit 1 
+        exit 1
     fi
     echo "" # Add an empty line for better readability between stack deployments
 done

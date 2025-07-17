@@ -3,7 +3,7 @@ services:
   matomo:
     image: ${MATOMO_IMAGE}
     env_file:
-      - /etc/wpmon/matomo/.env
+      - ./.env
     depends_on:
       mariadb:
         condition: service_healthy
