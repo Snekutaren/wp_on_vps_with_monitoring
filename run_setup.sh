@@ -199,7 +199,7 @@ setup_env() {
                 # Handle GRAFANA_PORT
                 if grep -q "^GRAFANA_PORT=" "$stack_env_file"; then
                     echo "  Updating GRAFANA_PORT in $stack_env_file to '$GRAFANA_PORT'."
-                    sed -i "s|^GRAFANA_PORT=.*|GRAFANA_PORT=$GRAFANA_file|" "$stack_env_file" || { echo "Error: Failed to update GRAFANA_PORT in monitoring .env file. Exiting." >&2; exit 1; }
+                    sed -i "s|^GRAFANA_PORT=.*|GRAFANA_PORT=$GRAFANA_PORT|" "$stack_env_file" || { echo "Error: Failed to update GRAFANA_PORT in monitoring .env file. Exiting." >&2; exit 1; }
                 else
                     echo "  Appending GRAFANA_PORT=$GRAFANA_PORT to $stack_env_file."
                     echo "GRAFANA_PORT=$GRAFANA_PORT" >> "$stack_env_file" || { echo "Error: Failed to append GRAFANA_PORT to monitoring .env file. Exiting." >&2; exit 1; }
