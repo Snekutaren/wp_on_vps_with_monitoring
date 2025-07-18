@@ -6,7 +6,7 @@ set -euo pipefail
 # Since run_setup.sh ensures this script is executed from APP_ROOT_DIR,
 # $(dirname "$0") will resolve to the current directory ('.').
 APP_ROOT_DIR=$(dirname "$0")
-APP_NAME=$APP_NAME=$(dirname "$0")
+APP_NAME=$(basename "$(dirname "$0")")
 
 # Define the list of Docker Compose stack directories
 declare -a STACKS=("traefik" "webstack" "monitoring")
