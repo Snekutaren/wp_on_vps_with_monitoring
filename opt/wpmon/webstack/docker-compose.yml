@@ -68,14 +68,14 @@ services:
 
 volumes:
   mariadb_data:
-    name: ${APP_NAME}-mariadb_data
+    #name: ${APP_NAME}-mariadb_data
   wordpress_data:
-    name: ${APP_NAME}-wordpress_data
+    #name: ${APP_NAME}-wordpress_data
 
 networks:
   app-network:
     driver: bridge
-    name: ${APP_NAME}-webstack-network
+    #name: ${APP_NAME}-webstack-network
   proxy-net:
     external: true
     name: ${APP_NAME}-proxy-net

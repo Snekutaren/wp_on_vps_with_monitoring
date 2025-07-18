@@ -42,9 +42,9 @@ services:
 
 volumes:
   traefik_letsencrypt:
-    name: ${APP_NAME}-traefik_letsencrypt
+    #name: ${APP_NAME}-traefik_letsencrypt
 
 networks:
   proxy-net:
     driver: bridge
-    name: ${APP_NAME}-proxy-net
+    #name: ${APP_NAME}-proxy-net
