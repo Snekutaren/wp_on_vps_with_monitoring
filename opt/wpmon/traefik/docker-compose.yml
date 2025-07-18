@@ -1,7 +1,7 @@
 services:
   traefik:
     image: ${TRAEFIK_IMAGE}
-    container_name: traefik # has to be removed for multiple stacks
+    container_name: ${APP_NAME}traefik
     env_file:
       - ./.env
     restart: unless-stopped
@@ -46,4 +46,4 @@ volumes:
 networks:
   proxy-net:
     driver: bridge
-    name: proxy-net
+    name: ${APP_NAME}proxy-net
