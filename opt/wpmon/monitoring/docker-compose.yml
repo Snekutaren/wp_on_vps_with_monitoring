@@ -80,4 +80,4 @@ networks:
     #name: ${APP_NAME}-monitoring-network
   proxy-net:
     external: true
-    #name: ${APP_NAME}-proxy-net
+    name: ${APP_NAME}-proxy-net
