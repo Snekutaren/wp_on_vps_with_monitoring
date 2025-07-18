@@ -67,8 +67,10 @@ services:
           memory: 512m
 
 volumes:
-  ${APP_NAME}-mariadb_data:
-  ${APP_NAME}-wordpress_data:
+  mariadb_data:
+    name: ${APP_NAME}-mariadb_data
+  wordpress_data:
+    name: ${APP_NAME}-wordpress_data
 
 networks:
   app-network:
