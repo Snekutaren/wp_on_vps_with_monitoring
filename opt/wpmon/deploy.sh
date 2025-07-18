@@ -17,7 +17,7 @@ echo "=== Starting Docker Compose Deployments ==="
 for stack_dir in "${STACKS[@]}"; do
     echo "--- Deploying $stack_dir stack ---"
 
-   export COMPOSE_PROJECT_NAME="$APP_NAME${stack_dir}"
+   export COMPOSE_PROJECT_NAME="$APP_NAME-$APP_ROOT_DIR"
 
     # Construct the full absolute path to the current stack's directory
     STACK_PATH="${APP_ROOT_DIR}/$stack_dir"
