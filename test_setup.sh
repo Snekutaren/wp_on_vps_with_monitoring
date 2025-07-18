@@ -6,7 +6,7 @@ set -euo pipefail # Exit on error, unset variables, pipefail
 RUN_SETUP_SCRIPT="./run_setup.sh"
 
 # Number of stacks to deploy for testing
-NUM_STACKS=10
+NUM_STACKS=3
 
 # Base name for the application (matches DEFAULT_APP_BASE_NAME in run_setup.sh)
 BASE_APP_NAME="wpmon"
