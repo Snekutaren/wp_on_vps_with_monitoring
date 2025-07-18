@@ -27,7 +27,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik_letsencrypt:/letsencrypt
     networks:
-      - ${APP_NAME}-proxy-net
+      - proxy-net
     labels:
       - "traefik.enable=false"  # Dashbord status
       - "traefik.http.routers.traefik-dashboard.rule=Host(`${TRAEFIK_DOMAIN}`)"
@@ -44,6 +44,6 @@ volumes:
   traefik_letsencrypt:
 
 networks:
-  ${APP_NAME}-proxy456-net:
+  proxy-net:
     driver: bridge
-    name: ${APP_NAME}-proxy789-net
+    name: ${APP_NAME}-proxy-net
