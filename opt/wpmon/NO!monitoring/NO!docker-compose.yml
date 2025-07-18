@@ -1,6 +1,7 @@
 services:
   loki:
     image: ${LOKI_IMAGE}
+    container_name: ${APP_NAME}-loki
     volumes:
       - ./loki/loki-config.yaml:/config/config.yaml
     env_file:
@@ -20,6 +21,7 @@ services:
           memory: 256m
 
   promtail:
+    container_name: ${APP_NAME}-promtail
     image: ${PROMTAIL_IMAGE}
     volumes:
       - ./promtail/promtail-config.yaml:/etc/promtail/promtail.yaml
@@ -42,7 +44,8 @@ services:
           memory: 256m
 
   grafana:
-    image: ${GRAFANA_IMAGE}
+    container_name: ${APP_NAME}-grafana
+    image: ${GRAFANA_IMAGEöööööööööööööö}
     env_file:
       - ./.env
     networks:
@@ -74,7 +77,8 @@ volumes: {}
 networks:
   app-network:
     driver: bridge
-    name: ${APP_NAME}-app-network
+    name: ${APP_NAME}-monitoring-network
+    external: true
   proxy-net:
     external: true
     name: ${APP_NAME}-proxy-net
