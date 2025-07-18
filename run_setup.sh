@@ -175,7 +175,7 @@ setup_env() {
         case "$stack" in
             "traefik")
                 export COMPOSE_PROJECT_NAME="$APP_NAME"
-                COMPOSE_PROJECT_NAME="{$APP_NAME}-traefik"
+                COMPOSE_PROJECT_NAME="$APP_NAME-traefik"
                 # Handle HTTP_PORT port
                 if grep -q "^HTTP_PORT=" "$stack_env_file"; then
                     echo "  Updating HTTP_PORT in $stack_env_file to '$HTTP_PORT'."
@@ -194,7 +194,8 @@ setup_env() {
                 fi
                 ;;
             "webstack")
-                export COMPOSE_PROJECT_NAME="$APP_NAME-webstack"
+                export COMPOSE_PROJECT_NAME="$APP_NAME"
+                COMPOSE_PROJECT_NAME="$APP_NAME-webstack"
                 # Handle WP_PORT
                 if grep -q "^WP_PORT=" "$stack_env_file"; then
                     echo "  Updating WP_PORT in $stack_env_file to '$WP_PORT'."
@@ -206,7 +207,7 @@ setup_env() {
                 ;;
             "monitoring")
                 export COMPOSE_PROJECT_NAME="$APP_NAME"
-                COMPOSE_PROJECT_NAME="{$APP_NAME}-monitoring"
+                COMPOSE_PROJECT_NAME="$APP_NAME-monitoring"
                 # Handle LOKI_PORT
                 if grep -q "^LOKI_PORT=" "$stack_env_file"; then
                     echo "  Updating LOKI_PORT in $stack_env_file to '$LOKI_PORT'."
