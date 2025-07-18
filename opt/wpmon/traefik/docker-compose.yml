@@ -46,4 +46,4 @@ volumes:
 networks:
   ${APP_NAME}-proxy-net:
     driver: bridge
-    name: ${APP_NAME}-proxy-net
+    #name: ${APP_NAME}-proxy-net
