@@ -3,7 +3,7 @@ services:
     image: ${MARIADB_IMAGE}
     container_name: ${APP_NAME}-mariadb
     volumes:
-      - ${APP_NAME}-mariadb_data:/var/lib/mysql
+      - mariadb_data:/var/lib/mysql
       - ./mariadb/healthcheck.sh:/healthcheck.sh:ro
     env_file:
       - ./.env
@@ -30,7 +30,7 @@ services:
     image: ${WORDPRESS_IMAGE}
     container_name: ${APP_NAME}-wordpress
     volumes:
-      - ${APP_NAME}-wordpress_data:/var/www/html
+      - wordpress_data:/var/www/html
     env_file:
       - ./.env
     environment:
