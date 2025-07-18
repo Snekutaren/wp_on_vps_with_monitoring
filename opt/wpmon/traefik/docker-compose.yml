@@ -1,7 +1,7 @@
 services:
   traefik:
     image: ${TRAEFIK_IMAGE}
-    #container_name: ${APP_NAME}-traefik
+    container_name: ${APP_NAME}-traefik
     env_file:
       - ./.env
     restart: unless-stopped
@@ -11,7 +11,7 @@ services:
       - "--api.insecure=false"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
-      - "--providers.docker.network=${APP_NAME}-proxy123-net"
+      - #"--providers.docker.network=${APP_NAME}-proxy123-net"
       - "--entrypoints.web.address=:${HTTP_PORT}"
       - "--entrypoints.websecure.address=:${HTTPS_PORT}"
       - "--certificatesresolvers.${CERT_RESOLVER}.acme.tlschallenge=true"
