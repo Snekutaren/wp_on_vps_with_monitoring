@@ -1,7 +1,7 @@
 services:
   traefik:
     image: ${TRAEFIK_IMAGE}
-    container_name: traefik
+    container_name: ${APP_NAME}-traefik
     env_file:
       - ./.env
     restart: unless-stopped
@@ -11,7 +11,7 @@ services:
       - "--api.insecure=false"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
-      - "--providers.docker.network=proxy-net"
+      - "--providers.docker.network=${APP_NAME}-proxy-net"
       - "--entrypoints.web.address=:${HTTP_PORT}"
       - "--entrypoints.websecure.address=:${HTTPS_PORT}"
       - "--certificatesresolvers.${CERT_RESOLVER}.acme.tlschallenge=true"
@@ -30,20 +30,21 @@ services:
       - proxy-net
     labels:
       - "traefik.enable=false"  # Dashbord status
-      - "traefik.http.routers.traefik-dashboard.rule=Host(`traefik.${DOMAIN}`)"
+      - "traefik.http.routers.traefik-dashboard.rule=Host(`${TRAEFIK_DOMAIN}`)"
       - "traefik.http.routers.traefik-dashboard.entrypoints=websecure"
       - "traefik.http.routers.traefik-dashboard.tls=true"
       - "traefik.http.routers.traefik-dashboard.tls.certresolver=${CERT_RESOLVER}"
       - "traefik.http.routers.traefik-dashboard.service=api@internal"
       - "traefik.http.routers.traefik-dashboard.tls.domains[0].main=${DOMAIN}"
-      - "traefik.http.routers.traefik-dashboard.tls.domains[0].sans=www.${DOMAIN},traefik.${DOMAIN},${GRAFANA_DOMAIN}"
+      - "traefik.http.routers.traefik-dashboard.tls.domains[0].sans=www.${DOMAIN},${TRAEFIK_DOMAIN},${GRAFANA_DOMAIN}"
       - "traefik.http.routers.traefik-dashboard.middlewares=dashboard-auth"
       - "traefik.http.middlewares.dashboard-auth.basicauth.users=${DASHBOARD_BASIC_AUTH}"
 
 volumes:
   traefik_letsencrypt:
+    #name: ${APP_NAME}-traefik_letsencrypt
 
 networks:
   proxy-net:
     driver: bridge
-    name: proxy-net
+    name: ${APP_NAME}-proxy-net
