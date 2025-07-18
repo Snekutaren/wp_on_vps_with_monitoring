@@ -72,7 +72,6 @@ ensure_newline_at_end() {
         fi
     fi
 }
-
 # --- Function to fetch and synchronize application files ---
 fetch_and_copy() {
     echo "=== Fetching and Synchronizing Application Files ==="
