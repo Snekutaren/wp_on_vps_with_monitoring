@@ -194,8 +194,7 @@ setup_env() {
                 fi
                 ;;
             "webstack")
-                export COMPOSE_PROJECT_NAME="$APP_NAME"
-                COMPOSE_PROJECT_NAME="{$APP_NAME}-webstack"
+                export COMPOSE_PROJECT_NAME="{$APP_NAME}-webstack"
                 # Handle WP_PORT
                 if grep -q "^WP_PORT=" "$stack_env_file"; then
                     echo "  Updating WP_PORT in $stack_env_file to '$WP_PORT'."
