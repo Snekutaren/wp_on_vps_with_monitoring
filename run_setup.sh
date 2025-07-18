@@ -38,8 +38,8 @@ INSTALL_BASE_DIR="/opt"
 DEFAULT_APP_BASE_NAME="wpmon"
 
 # Default starting port numbers
-HTTP="80"
-HTTPS="443"
+HTTP_PORT="80"
+HTTPS_PORT="443"
 WP_PORT="80" # Default internal port for WordPress, as confirmed by docker-compose.yml
 LOKI_PORT="3100"
 GRAFANA_PORT="3000"
@@ -175,21 +175,21 @@ setup_env() {
         # Step 3: Set/Update Port Variables based on stack (idempotent update)
         case "$stack" in
             "traefik")
-                # Handle HTTP port
-                if grep -q "^HTTP=" "$stack_env_file"; then
-                    echo "  Updating HTTP in $stack_env_file to '$HTTP'."
-                    sed -i "s|^HTTP=.*|HTTP=$HTTP|" "$stack_env_file" || { echo "Error: Failed to update HTTP in traefik .env file. Exiting." >&2; exit 1; }
+                # Handle HTTP_PORT port
+                if grep -q "^HTTP_PORT=" "$stack_env_file"; then
+                    echo "  Updating HTTP_PORT in $stack_env_file to '$HTTP_PORT'."
+                    sed -i "s|^HTTP_PORT=.*|HTTP_PORT=$HTTP_PORT|" "$stack_env_file" || { echo "Error: Failed to update HTTP_PORT in traefik .env file. Exiting." >&2; exit 1; }
                 else
-                    echo "  Appending HTTP=$HTTP to $stack_env_file."
-                    echo "HTTP=$HTTP" >> "$stack_env_file" || { echo "Error: Failed to append HTTP to traefik .env file. Exiting." >&2; exit 1; }
+                    echo "  Appending HTTP_PORT=$HTTP_PORT to $stack_env_file."
+                    echo "HTTP_PORT=$HTTP_PORT" >> "$stack_env_file" || { echo "Error: Failed to append HTTP_PORT to traefik .env file. Exiting." >&2; exit 1; }
                 fi
-                # Handle HTTPS port
-                if grep -q "^HTTPS=" "$stack_env_file"; then
-                    echo "  Updating HTTPS in $stack_env_file to '$HTTPS'."
-                    sed -i "s|^HTTPS=.*|HTTPS=$HTTPS|" "$stack_env_file" || { echo "Error: Failed to update HTTPS in traefik .env file. Exiting." >&2; exit 1; }
+                # Handle HTTPS_PORT port
+                if grep -q "^HTTPS_PORT=" "$stack_env_file"; then
+                    echo "  Updating HTTPS_PORT in $stack_env_file to '$HTTPS_PORT'."
+                    sed -i "s|^HTTPS_PORT=.*|HTTPS_PORT=$HTTPS_PORT|" "$stack_env_file" || { echo "Error: Failed to update HTTPS_PORT in traefik .env file. Exiting." >&2; exit 1; }
                 else
-                    echo "  Appending HTTPS=$HTTPS to $stack_env_file."
-                    echo "HTTPS=$HTTPS" >> "$stack_env_file" || { echo "Error: Failed to append HTTPS to traefik .env file. Exiting." >&2; exit 1; }
+                    echo "  Appending HTTPS_PORT=$HTTPS_PORT to $stack_env_file."
+                    echo "HTTPS_PORT=$HTTPS_PORT" >> "$stack_env_file" || { echo "Error: Failed to append HTTPS_PORT to traefik .env file. Exiting." >&2; exit 1; }
                 fi
                 ;;
             "webstack")
@@ -341,8 +341,8 @@ main() {
     fi
 
     # Apply global port offset to all relevant ports
-    HTTP=$((HTTP + PORT_OFFSET_ARG))
-    HTTPS=$((HTTPS + PORT_OFFSET_ARG))
+    HTTP_PORT=$((HTTP_PORT + PORT_OFFSET_ARG))
+    HTTPS_PORT=$((HTTPS_PORT + PORT_OFFSET_ARG))
     WP_PORT=$((WP_PORT + PORT_OFFSET_ARG))
     LOKI_PORT=$((LOKI_PORT + PORT_OFFSET_ARG))
     GRAFANA_PORT=$((GRAFANA_PORT + PORT_OFFSET_ARG))
