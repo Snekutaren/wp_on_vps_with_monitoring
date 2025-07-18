@@ -6,7 +6,7 @@ services:
     env_file:
       - ./.env
     networks:
-      - ${APP_NAME}-app-network
+      - app-network
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:{$LOKI_PORT}/ready | grep ready"]
       interval: 5s
@@ -28,7 +28,7 @@ services:
       - ./.env
     command: -config.file=/etc/promtail/promtail.yaml
     networks:
-      - ${APP_NAME}-app-network
+      - app-network
     healthcheck:
       test: ["CMD-SHELL", "pidof promtail || exit 1"]
       interval: 5s
@@ -46,8 +46,8 @@ services:
     env_file:
       - ./.env
     networks:
-      - ${APP_NAME}-app-network
-      - ${APP_NAME}-proxy-net
+      - app-network
+      - proxy-net
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:{$GRAFANA_PORT} | grep stylesheet"]
       interval: 10s
@@ -72,8 +72,9 @@ services:
 volumes: {}
 
 networks:
-  ${APP_NAME}-app-network:
+  app-network:
     driver: bridge
-  ${APP_NAME}-proxy-net:
+    name: ${APP_NAME}-app-network
+  proxy-net:
     external: true
     name: ${APP_NAME}-proxy-net

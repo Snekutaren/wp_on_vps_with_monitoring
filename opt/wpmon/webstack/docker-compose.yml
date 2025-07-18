@@ -12,7 +12,7 @@ services:
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     networks:
-      - ${APP_NAME}-app-network
+      - app-network
     healthcheck:
       test: ["CMD", "bash", "/healthcheck.sh"]
       interval: 10s
@@ -41,8 +41,8 @@ services:
       mariadb:
         condition: service_healthy
     networks:
-      - ${APP_NAME}-app-network
-      - ${APP_NAME}-proxy-net
+      - app-network
+      - proxy-net
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost"]
       interval: 10s
@@ -69,8 +69,9 @@ volumes:
   wordpress_data:
 
 networks:
-  ${APP_NAME}-app-network:
+  app-network:
     driver: bridge
-  ${APP_NAME}-proxy-net:
+    name: ${APP_NAME}-app-network
+  proxy-net:
     external: true
     name: ${APP_NAME}-proxy-net
