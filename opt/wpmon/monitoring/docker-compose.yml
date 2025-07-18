@@ -1,7 +1,7 @@
 services:
   loki:
     image: ${LOKI_IMAGE}
-    container_name: ${APP_NAME}-loki
+    #container_name: ${APP_NAME}-loki
     volumes:
       - ./loki/loki-config.yaml:/config/config.yaml
     env_file:

@@ -1,7 +1,7 @@
 services:
   mariadb:
     image: ${MARIADB_IMAGE}
-    container_name: ${APP_NAME}-mariadb
+    #container_name: ${APP_NAME}-mariadb
     volumes:
       - mariadb_data:/var/lib/mysql
       - ./mariadb/healthcheck.sh:/healthcheck.sh:ro
