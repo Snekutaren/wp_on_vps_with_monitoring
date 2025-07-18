@@ -2,10 +2,13 @@
 
 set -euo pipefail
 
+
+
 # Dynamically determine the application's root directory based on this script's location.
 # Since run_setup.sh ensures this script is executed from APP_ROOT_DIR,
 # $(dirname "$0") will resolve to the current directory ('.').
 APP_ROOT_DIR=$(dirname "$0")
+APP_NAME="$APP_ROOT_DIR"
 
 # Define the list of Docker Compose stack directories
 declare -a STACKS=("traefik" "webstack" "monitoring")
