@@ -320,7 +320,7 @@ main() {
           CUSTOM_APP_BASE_NAME_ARG="$OPTARG"
           ;;
         n) # Numeric suffix for application name (e.g., for wpmon_2)
-          APP_NAME_SUFFIX_ARG="_$OPTARG"
+          APP_NAME_SUFFIX_ARG="_$((OPTARG - 1))"
           ;;
         o) # Global port offset (added to all default ports)
           PORT_OFFSET_ARG="$OPTARG"
