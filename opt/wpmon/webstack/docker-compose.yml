@@ -3,7 +3,7 @@ services:
     image: ${MARIADB_IMAGE}
     container_name: ${APP_NAME}-mariadb
     volumes:
-      - mariadb_data:/var/lib/mysql
+      - ${APP_NAME}-mariadb_data:/var/lib/mysql
       - ./mariadb/healthcheck.sh:/healthcheck.sh:ro
     env_file:
       - ./.env
@@ -30,7 +30,7 @@ services:
     image: ${WORDPRESS_IMAGE}
     container_name: ${APP_NAME}-wordpress
     volumes:
-      - wordpress_data:/var/www/html
+      - ${APP_NAME}-wordpress_data:/var/www/html
     env_file:
       - ./.env
     environment:
@@ -67,8 +67,8 @@ services:
           memory: 512m
 
 volumes:
-  mariadb_data:
-  wordpress_data:
+  ${APP_NAME}-mariadb_data:
+  ${APP_NAME}-wordpress_data:
 
 networks:
   app-network:

@@ -16,7 +16,7 @@ services:
     ports:
       - "${MATOMO_HTTP_PORT}:80"
     volumes:
-      - matomo_data:/var/www/html
+      - ${APP_NAME}-matomo_data:/var/www/html
     networks:
       - app-network
 
