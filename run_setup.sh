@@ -308,7 +308,6 @@ main() {
 
     local CUSTOM_APP_BASE_NAME_ARG=""
     local APP_NAME_SUFFIX_ARG=""
-    PORT_OFFSET_ARG=0
     PORT_OFFSET_ARG="$((PORT_OFFSET_ARG - 1))"
 
     # Parse command-line options
