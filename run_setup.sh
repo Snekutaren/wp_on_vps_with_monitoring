@@ -308,8 +308,7 @@ main() {
 
     local CUSTOM_APP_BASE_NAME_ARG=""
     local APP_NAME_SUFFIX_ARG=""
-    local PORT_OFFSET_ARG=0
-    local OPTARG=0
+    local PORT_OFFSET_ARG="$((PORT_OFFSET_ARG - 1))"
 
     # Parse command-line options
     while getopts "b:a:n:o:" opt; do
@@ -321,10 +320,10 @@ main() {
           CUSTOM_APP_BASE_NAME_ARG="$OPTARG"
           ;;
         n) # Numeric suffix for application name (e.g., for wpmon_2)
-          APP_NAME_SUFFIX_ARG="_$((OPTARG - 1))"
+          APP_NAME_SUFFIX_ARG="_$OPTARG"
           ;;
         o) # Global port offset (added to all default ports)
-          PORT_OFFSET_ARG="$((OPTARG - 1))"
+          PORT_OFFSET_ARG="$OPTARG"
           ;;
         \?)
           echo "Invalid option: -$OPTARG" >&2
