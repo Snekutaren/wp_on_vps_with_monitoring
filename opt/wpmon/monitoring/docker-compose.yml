@@ -78,7 +78,6 @@ networks:
   app-network:
     driver: bridge
     name: ${APP_NAME}-monitoring-network
-    external: true
   proxy-net:
     external: true
     name: ${APP_NAME}-proxy-net
