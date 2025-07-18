@@ -1,7 +1,7 @@
 services:
   traefik:
     image: ${TRAEFIK_IMAGE}
-    container_name: ${APP_NAME}traefik
+    container_name: ${APP_NAME}-traefik
     env_file:
       - ./.env
     restart: unless-stopped
@@ -27,7 +27,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik_letsencrypt:/letsencrypt
     networks:
-      - proxy-net
+      - ${APP_NAME}-proxy-net
     labels:
       - "traefik.enable=false"  # Dashbord status
       - "traefik.http.routers.traefik-dashboard.rule=Host(`${TRAEFIK_DOMAIN}`)"
@@ -44,6 +44,6 @@ volumes:
   traefik_letsencrypt:
 
 networks:
-  proxy-net:
+  ${APP_NAME}-proxy-net:
     driver: bridge
-    name: ${APP_NAME}proxy-net
+    name: ${APP_NAME}-proxy-net

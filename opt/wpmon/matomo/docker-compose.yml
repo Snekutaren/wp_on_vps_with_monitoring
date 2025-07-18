@@ -18,11 +18,11 @@ services:
     volumes:
       - matomo_data:/var/www/html
     networks:
-      - app-network
+      - ${APP_NAME}-app-network
 
 volumes:
   matomo_data:
 
 networks:
-  app-network:
+  ${APP_NAME}-app-network:
     driver: bridge
