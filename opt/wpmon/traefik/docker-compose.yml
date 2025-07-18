@@ -11,7 +11,7 @@ services:
       - "--api.insecure=false"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
-      - "--providers.docker.network=proxy-net"
+      - "--providers.docker.network=${APP_NAME}-proxy-net"
       - "--entrypoints.web.address=:${HTTP_PORT}"
       - "--entrypoints.websecure.address=:${HTTPS_PORT}"
       - "--certificatesresolvers.${CERT_RESOLVER}.acme.tlschallenge=true"
