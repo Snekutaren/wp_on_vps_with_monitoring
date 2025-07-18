@@ -45,7 +45,7 @@ services:
 
   grafana:
     container_name: ${APP_NAME}-grafana
-    image: ${GRAFANA_IMAGEöööööööööööööö}
+    image: ${GRAFANA_IMAGE}
     env_file:
       - ./.env
     networks:
