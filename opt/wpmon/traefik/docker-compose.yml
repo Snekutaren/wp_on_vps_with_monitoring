@@ -44,6 +44,6 @@ volumes:
   traefik_letsencrypt:
 
 networks:
-  ${APP_NAME}-proxy-net:
+  proxy-net:
     driver: bridge
     #name: ${APP_NAME}-proxy-net
