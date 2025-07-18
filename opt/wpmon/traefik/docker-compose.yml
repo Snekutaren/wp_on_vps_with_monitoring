@@ -1,7 +1,7 @@
 services:
   traefik:
     image: ${TRAEFIK_IMAGE}
-    container_name: ${APP_NAME}-traefik
+    #container_name: ${APP_NAME}-traefik
     env_file:
       - ./.env
     restart: unless-stopped
@@ -42,9 +42,9 @@ services:
 
 volumes:
   traefik_letsencrypt:
-    name: ${APP_NAME}-traefik_letsencrypt
+    #name: ${APP_NAME}-traefik_letsencrypt
 
 networks:
   proxy-net:
     driver: bridge
-    name: ${APP_NAME}-proxy-net
+    #name: ${APP_NAME}-proxy-net
