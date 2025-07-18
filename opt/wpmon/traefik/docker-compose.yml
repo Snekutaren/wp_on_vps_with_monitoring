@@ -1,7 +1,7 @@
 services:
   traefik:
     image: ${TRAEFIK_IMAGE}
-    #container_name: ${APP_NAME}-traefik
+    container_name: ${APP_NAME}-traefik
     env_file:
       - ./.env
     restart: unless-stopped
