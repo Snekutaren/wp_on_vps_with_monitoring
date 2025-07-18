@@ -307,7 +307,7 @@ main() {
 
     local CUSTOM_APP_BASE_NAME_ARG=""
     local APP_NAME_SUFFIX_ARG=""
-    local PORT_OFFSET_ARG=0
+    PORT_OFFSET_ARG=0
 
     # Parse command-line options
     while getopts "b:a:n:o:" opt; do
