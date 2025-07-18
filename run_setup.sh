@@ -138,6 +138,10 @@ install_docker() {
 # --- Function to setup environment files (.env) for each stack ---
 setup_env() {
     echo "=== Setting Up Environment Files ==="
+
+    export COMPOSE_PROJECT_NAME="$APP_NAME"
+    COMPOSE_PROJECT_NAME="$APP_NAME"
+
     for stack in "traefik" "webstack" "monitoring"; do
         local stack_env_file="${INSTALL_BASE_DIR}/$APP_NAME/${stack}/.env"
         local example_env_path="${INSTALL_BASE_DIR}/$APP_NAME/${stack}/example.env"
@@ -174,8 +178,6 @@ setup_env() {
         # Step 3: Set/Update Port Variables based on stack (idempotent update)
         case "$stack" in
             "traefik")
-                export COMPOSE_PROJECT_NAME="$APP_NAME"
-                COMPOSE_PROJECT_NAME="$APP_NAME-traefik"
                 # Handle HTTP_PORT port
                 if grep -q "^HTTP_PORT=" "$stack_env_file"; then
                     echo "  Updating HTTP_PORT in $stack_env_file to '$HTTP_PORT'."
@@ -194,8 +196,6 @@ setup_env() {
                 fi
                 ;;
             "webstack")
-                export COMPOSE_PROJECT_NAME="$APP_NAME"
-                COMPOSE_PROJECT_NAME="$APP_NAME-webstack"
                 # Handle WP_PORT
                 if grep -q "^WP_PORT=" "$stack_env_file"; then
                     echo "  Updating WP_PORT in $stack_env_file to '$WP_PORT'."
@@ -206,8 +206,6 @@ setup_env() {
                 fi
                 ;;
             "monitoring")
-                export COMPOSE_PROJECT_NAME="$APP_NAME"
-                COMPOSE_PROJECT_NAME="$APP_NAME-monitoring"
                 # Handle LOKI_PORT
                 if grep -q "^LOKI_PORT=" "$stack_env_file"; then
                     echo "  Updating LOKI_PORT in $stack_env_file to '$LOKI_PORT'."
