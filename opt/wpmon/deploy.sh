@@ -6,7 +6,7 @@ set -euo pipefail
 # Since run_setup.sh ensures this script is executed from APP_ROOT_DIR,
 # $(dirname "$0") will resolve to the current directory ('.').
 APP_ROOT_DIR=$(dirname "$0")
-APP_NAME=$(basename "$(dirname "$0")")
+APP_NAME=$(basename "$(realpath "$(dirname "$0")/..")")
 
 # Define the list of Docker Compose stack directories
 declare -a STACKS=("traefik" "webstack" "monitoring")
@@ -17,7 +17,7 @@ echo "=== Starting Docker Compose Deployments ==="
 for stack_dir in "${STACKS[@]}"; do
     echo "--- Deploying $stack_dir stack ---"
 
-   export COMPOSE_PROJECT_NAME="{$APP_NAME}_${stack_dir}"
+   export COMPOSE_PROJECT_NAME="{$APP_NAME}${stack_dir}"
 
     # Construct the full absolute path to the current stack's directory
     STACK_PATH="${APP_ROOT_DIR}/$stack_dir"
