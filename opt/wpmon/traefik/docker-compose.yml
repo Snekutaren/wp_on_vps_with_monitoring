@@ -11,7 +11,7 @@ services:
       - "--api.insecure=false"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
-      - "--providers.docker.network=${APP_NAME}-proxy-net"
+      - "--providers.docker.network=${APP_NAME}-proxy123-net"
       - "--entrypoints.web.address=:${HTTP_PORT}"
       - "--entrypoints.websecure.address=:${HTTPS_PORT}"
       - "--certificatesresolvers.${CERT_RESOLVER}.acme.tlschallenge=true"
@@ -44,6 +44,6 @@ volumes:
   traefik_letsencrypt:
 
 networks:
-  ${APP_NAME}-proxy123-net:
+  ${APP_NAME}-proxy456-net:
     driver: bridge
-    name: ${APP_NAME}-proxy-net
+    name: ${APP_NAME}-proxy789-net
